@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.mrbird.febs.cos.dao.SupplierInfoMapper">
+
+    <!-- 分页查询供应商信息 -->
+    <select id="selectSupplierPage" resultType="java.util.LinkedHashMap">
+        SELECT
+        si.id,
+        si.purchase_type AS purchaseType,
+        si.supplier_name AS supplierName,
+        si.remark,
+        si.create_date AS createDate
+        FROM
+        supplier_info si
+        WHERE 1 = 1
+        <if test="supplierInfo.supplierName != null and supplierInfo.supplierName != ''">
+            and si.supplier_name LIKE CONCAT('%',#{supplierInfo.supplierName},'%')
+        </if>
+        <if test="supplierInfo.purchaseType != null">
+            and si.purchase_type = #{supplierInfo.purchaseType}
+        </if>
+        ORDER BY si.create_date DESC
+    </select>
+
+</mapper>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.mrbird.febs.cos.dao.StaffInfoMapper">
+
+    <!-- 分页查询员工信息 -->
+    <select id="selectStaffPage" resultType="java.util.LinkedHashMap">
+        SELECT si.id,
+        si.staff_code AS staffCode,
+        si.staff_name AS staffName,
+        si.staff_type AS staffType,
+        si.staff_sex AS staffSex,
+        si.staff_status AS staffStatus,
+        si.avatar,
+        si.on_board_time AS onBoardTime,
+        si.resign_time AS resignTime,
+        si.birth_date AS birthDate,
+        si.remark,
+        si.email
+        FROM staff_info si
+        WHERE 1 = 1
+        <if test="staffInfo.staffName != null and staffInfo.staffName != ''">
+            and si.staff_name LIKE CONCAT('%',#{staffInfo.staffName},'%')
+        </if>
+        <if test="staffInfo.email != null and staffInfo.email != ''">
+            and si.email LIKE CONCAT('%',#{staffInfo.email},'%')
+        </if>
+        <if test="staffInfo.staffType != null">
+            and si.staff_type = #{staffInfo.staffType}
+        </if>
+        <if test="staffInfo.staffSex != null">
+            and si.staff_sex = #{staffInfo.staffSex}
+        </if>
+        <if test="staffInfo.staffStatus != null">
+            and si.staff_status = #{staffInfo.staffStatus}
+        </if>
+        ORDER BY si.resign_time DESC
+    </select>
+</mapper>

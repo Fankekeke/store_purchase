@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.mrbird.febs.cos.dao.StorageRecordMapper">
+
+    <!-- 分页查询入库记录 -->
+    <select id="selectStorageRecordPage" resultType="java.util.LinkedHashMap">
+        SELECT sr.id,
+        sr.code,
+        sr.supplier_id AS supplierId,
+        sr.handler_code AS handlerCode,
+        sr.custodian_code AS custodianCode,
+        sr.total_price AS totalPrice,
+        sr.create_date AS createDate,
+        sr.remark,
+        si1.staff_name AS handlerName,
+        si2.staff_name AS custodianName,
+        si1.avatar AS handlerAvatar,
+        si2.avatar AS custodianAvatar,
+        si.supplier_name AS supplierName
+        FROM storage_record sr
+        LEFT JOIN staff_info si1 on sr.handler_code = si1.staff_code
+        LEFT JOIN staff_info si2 on sr.custodian_code = si2.staff_code
+        LEFT JOIN supplier_info si on sr.supplier_id = si.id
+        WHERE 1 = 1
+        <if test="storageRecord.code != null and storageRecord.code != ''">
+            and sr.code LIKE CONCAT('%',#{storageRecord.code},'%')
+        </if>
+        <if test="storageRecord.handlerName != null and storageRecord.handlerName != ''">
+            and si1.staff_name LIKE CONCAT('%',#{storageRecord.handlerName},'%')
+        </if>
+        <if test="storageRecord.custodianName != null and storageRecord.custodianName != ''">
+            and si2.staff_name LIKE CONCAT('%',#{storageRecord.custodianName},'%')
+        </if>
+        <if test="storageRecord.supplierName != null and storageRecord.supplierName != ''">
+            and si.supplier_name LIKE CONCAT('%',#{storageRecord.supplierName},'%')
+        </if>
+        ORDER BY sr.create_date DESC
+    </select>
+
+    <!-- 入库记录详情 -->
+    <select id="storageRecordDetail" resultType="java.util.LinkedHashMap">
+        SELECT si.id,
+        si.material_name AS materialName,
+        si.material_type AS materialType,
+        si.measurement_unit AS measurementUnit,
+        si.quantity,
+        si.transaction_type AS transactionType,
+        si.create_date AS createDate,
+        si.remark,
+        si.model,
+        si.unit_price AS unitPrice
+        FROM storehouse_info si
+        LEFT JOIN storage_record sr
+        on sr.code = si.inbound_order_number
+        WHERE 1 = 1 and sr.code = #{code}
+        ORDER BY si.create_date DESC
+    </select>
+
+    <!-- 根据时间获取入库记录 -->
+    <select id="selectStorageRecordByDate" resultType="cc.mrbird.febs.cos.entity.StorageRecord">
+        SELECT
+        sr.id,
+        sr.code,
+        sr.supplier_id AS supplierId,
+        sr.handler_code AS handlerCode,
+        sr.custodian_code AS custodianCode,
+        sr.total_price AS totalPrice,
+        sr.create_date AS createDate,
+        sr.remark
+        FROM storage_record sr
+        WHERE 1 = 1
+        <if test="month != null and month != ''">
+            AND YEAR(sr.create_date) = #{year}
+            AND MONTH(sr.create_date) = #{month}
+        </if>
+        <if test="month == null">
+            AND YEAR(sr.create_date) = #{year}
+        </if>
+    </select>
+
+    <!-- 分页查询入库统计 -->
+    <select id="selectLastSevenDaysInCount" resultType="java.util.LinkedHashMap">
+        SELECT
+        date_format( spo.days, '%m-%d' ) days,
+        sum( l.quantity ) AS quantity,
+        sum( l.totalPrice ) AS totalPrice
+        FROM
+        (
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 0 DAY ) days UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 1 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 2 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 3 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 4 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 5 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 6 DAY )
+        ) AS spo
+        LEFT JOIN (
+        SELECT
+        sr.create_date,
+        si.material_type,
+        si.quantity,
+        si.unit_price * si.quantity AS totalPrice
+        FROM
+        storage_record sr
+        LEFT JOIN storehouse_info si ON si.inbound_order_number = sr.CODE
+        ) AS l ON (
+        DATE_FORMAT( l.create_date, '%Y-%m-%d' ) = DATE_FORMAT( spo.days, '%Y-%m-%d' ))
+        GROUP BY
+        days
+    </select>
+</mapper>

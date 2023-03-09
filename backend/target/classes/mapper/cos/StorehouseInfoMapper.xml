@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.mrbird.febs.cos.dao.StorehouseInfoMapper">
+
+    <!-- 分页查询库房信息 -->
+    <select id="selectStorehousePage" resultType="java.util.LinkedHashMap">
+        SELECT si.id,
+        si.material_name AS materialName,
+        si.material_type AS materialType,
+        si.measurement_unit AS measurementUnit,
+        si.quantity,
+        si.transaction_type AS transactionType,
+        si.create_date AS createDate,
+        si.remark,
+        si.model,
+        si.unit_price AS unitPrice,
+        si.inbound_order_number AS inboundOrderNumber,
+        si.delivery_order_number AS deliveryOrderNumber
+        FROM storehouse_info si
+        WHERE si.transaction_type = 0
+        <if test="storehouseInfo.materialName != null and storehouseInfo.materialName != ''">
+            and si.material_name LIKE CONCAT('%',#{storehouseInfo.materialName},'%')
+        </if>
+        <if test="storehouseInfo.model != null and storehouseInfo.model != ''">
+            and si.model LIKE CONCAT('%',#{storehouseInfo.model},'%')
+        </if>
+        <if test="storehouseInfo.materialType != null">
+            and si.material_type = #{storehouseInfo.materialType}
+        </if>
+        ORDER BY si.create_date DESC
+    </select>
+
+    <!-- 根据物料名称查询出入库记录 -->
+    <select id="selectStorehouseDetail" resultType="java.util.LinkedHashMap">
+        SELECT si.id,
+        si.material_name AS materialName,
+        si.measurement_unit AS measurementUnit,
+        si.model,
+        si.material_type AS materialType,
+        si.unit_price AS unitPrice,
+        si.quantity,
+        <if test="transactionType != null and transactionType == 1">
+            si.inbound_order_number AS orderNumber,
+            sr.create_date AS createDate
+        </if>
+        <if test="transactionType != null and transactionType == 2">
+            si.delivery_order_number AS orderNumber,
+            osr.create_date AS createDate
+        </if>
+        FROM storehouse_info si
+        <if test="transactionType != null and transactionType == 1">
+            LEFT JOIN storage_record sr on sr.code = si.inbound_order_number
+        </if>
+        <if test="transactionType != null and transactionType == 2">
+            LEFT JOIN out_stock_record osr on osr.code = si.delivery_order_number
+        </if>
+        WHERE 1 = 1
+        AND si.transaction_type = #{transactionType}
+        AND si.material_name = #{name}
+        ORDER BY
+        <if test="transactionType != null and transactionType == 1">
+            sr.create_date DESC
+        </if>
+        <if test="transactionType != null and transactionType == 2">
+            osr.create_date DESC
+        </if>
+    </select>
+</mapper>

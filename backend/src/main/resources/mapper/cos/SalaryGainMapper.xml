@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.mrbird.febs.cos.dao.SalaryGainMapper">
+
+    <!-- 分页查询员工薪资涨幅情况 -->
+    <select id="selectSalaryPage" resultType="java.util.LinkedHashMap">
+        SELECT sg.id,
+        sg.staff_code AS staffCode,
+        sg.salary,
+        sg.current_flag AS currentFlag,
+        sg.create_date AS createDate,
+        sg.type,
+        sg.remark,
+        si.staff_name AS staffName,
+        si.avatar,
+        si.staff_type AS staffType
+        FROM salary_gain sg
+        LEFT JOIN staff_info si ON si.staff_code = sg.staff_code
+        WHERE 1 = 1
+        <if test="salaryGain.staffName != null and salaryGain.staffName != ''">
+            and si.staff_name LIKE CONCAT('%',#{salaryGain.staffName},'%')
+        </if>
+        <if test="salaryGain.staffType != null">
+            and si.staff_type = #{salaryGain.staffType}
+        </if>
+        ORDER BY sg.create_date DESC
+    </select>
+
+    <!-- 获取员工薪资涨幅情况 -->
+    <select id="selectSalaryByStaffCode" resultType="java.util.LinkedHashMap">
+        SELECT sg.id,
+        sg.salary,
+        sg.current_flag AS currentFlag,
+        sg.create_date  AS createDate,
+        sg.type
+        FROM salary_gain sg
+        WHERE 1 = 1 AND sg.staff_code = #{staffCode}
+        ORDER BY sg.create_date ASC
+    </select>
+</mapper>

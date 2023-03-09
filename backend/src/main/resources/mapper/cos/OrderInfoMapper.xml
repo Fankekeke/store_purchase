@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.mrbird.febs.cos.dao.OrderInfoMapper">
+
+    <!-- 分页查询订单信息 -->
+    <select id="selectOrderPage" resultType="java.util.LinkedHashMap">
+        SELECT
+        oi.id,
+        oi.code ,
+        oi.remark ,
+        oi.total_price AS totalPrice ,
+        oi.handler_code AS handlerCode,
+        oi.create_time AS createTime,
+        si.staff_name AS handlerName,
+        si.avatar AS handlerAvatar
+        FROM order_info oi
+        LEFT JOIN staff_info si ON oi.handler_code = si.staff_code
+        WHERE 1 = 1
+        <if test="orderInfo.handlerName != null and orderInfo.handlerName != ''">
+            and si.staff_name LIKE CONCAT('%',#{orderInfo.handlerName},'%')
+        </if>
+        <if test="orderInfo.code != null and orderInfo.code != ''">
+            and oi.code LIKE CONCAT('%',#{orderInfo.code},'%')
+        </if>
+    </select>
+
+    <!-- 查询订单详情 -->
+    <select id="orderDetail" resultType="java.util.LinkedHashMap">
+        SELECT si.id,
+        si.material_name AS materialName,
+        si.material_type AS materialType,
+        si.measurement_unit AS measurementUnit,
+        si.quantity,
+        si.transaction_type AS transactionType,
+        si.create_date AS createDate,
+        si.remark,
+        si.model,
+        si.unit_price AS unitPrice
+        FROM storehouse_info si
+        LEFT JOIN order_info oi on oi.code = si.delivery_order_number
+        WHERE 1 = 1 and oi.code = #{code}
+        ORDER BY si.create_date DESC
+    </select>
+
+    <!-- 根据时间查询订单信息 -->
+    <select id="selectOrderInfoByDate" resultType="cc.mrbird.febs.cos.entity.OrderInfo">
+        SELECT
+        oi.id,
+        oi.code ,
+        oi.total_price AS totalPrice ,
+        oi.handler_code AS handlerCode,
+        oi.create_time AS createTime
+        FROM order_info oi
+        WHERE 1 = 1
+        <if test="month != null and month != ''">
+            AND YEAR(oi.create_time) = #{year}
+            AND MONTH(oi.create_time) = #{month}
+        </if>
+        <if test="month == null">
+            AND YEAR(oi.create_time) = #{year}
+        </if>
+    </select>
+
+    <!-- 七天内订单统计 -->
+    <select id="selectLastSevenDaysOrderCount" resultType="java.util.LinkedHashMap">
+        SELECT
+        date_format( spo.days, '%m-%d' ) days,
+        sum( l.quantity ) AS quantity,
+        sum( l.totalPrice ) AS totalPrice
+        FROM
+        (
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 0 DAY ) days UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 1 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 2 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 3 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 4 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 5 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 6 DAY )
+        ) AS spo
+        LEFT JOIN (
+        SELECT
+        oi.create_time,
+        si.material_type,
+        si.quantity,
+        si.unit_price * si.quantity AS totalPrice
+        FROM
+        order_info oi
+        LEFT JOIN storehouse_info si ON si.delivery_order_number = oi.CODE
+        ) AS l ON (
+        DATE_FORMAT( l.create_time, '%Y-%m-%d' ) = DATE_FORMAT( spo.days, '%Y-%m-%d' ))
+        GROUP BY
+        days
+    </select>
+</mapper>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.mrbird.febs.cos.dao.OutStockRecordMapper">
+
+    <!-- 分页查询出库记录 -->
+    <select id="selectOutStockRecordPage" resultType="java.util.LinkedHashMap">
+        SELECT osr.id,
+        osr.code,
+        osr.handler_code AS handlerCode,
+        osr.custodian_code AS custodianCode,
+        osr.create_date AS createDate,
+        osr.remark,
+        si1.staff_name AS handlerName,
+        si2.staff_name AS custodianName,
+        si1.avatar AS handlerAvatar,
+        si2.avatar AS custodianAvatar
+        FROM out_stock_record osr
+        LEFT JOIN staff_info si1 on osr.handler_code = si1.staff_code
+        LEFT JOIN staff_info si2 on osr.custodian_code = si2.staff_code
+        WHERE 1 = 1
+        <if test="outStockRecord.code != null and outStockRecord.code != ''">
+            and osr.code LIKE CONCAT('%',#{outStockRecord.code},'%')
+        </if>
+        <if test="outStockRecord.handlerName != null and outStockRecord.handlerName != ''">
+            and si1.staff_name LIKE CONCAT('%',#{outStockRecord.handlerName},'%')
+        </if>
+        <if test="outStockRecord.custodianName != null and outStockRecord.custodianName != ''">
+            and si2.staff_name LIKE CONCAT('%',#{outStockRecord.custodianName},'%')
+        </if>
+        ORDER BY osr.create_date DESC
+    </select>
+
+    <!-- 查询出库记录详情 -->
+    <select id="outStockDetail" resultType="java.util.LinkedHashMap">
+        SELECT si.id,
+        si.material_name AS materialName,
+        si.material_type AS materialType,
+        si.measurement_unit AS measurementUnit,
+        si.quantity,
+        si.transaction_type AS transactionType,
+        si.create_date AS createDate,
+        si.remark,
+        si.model,
+        si.unit_price AS unitPrice
+        FROM storehouse_info si
+        LEFT JOIN out_stock_record osr
+        on osr.code = si.delivery_order_number
+        WHERE 1 = 1 and osr.code = #{code}
+        ORDER BY si.create_date DESC
+    </select>
+
+    <!-- 七天内出库统计 -->
+    <select id="selectLastSevenDaysOutCount" resultType="java.util.LinkedHashMap">
+        SELECT
+        date_format( spo.days, '%m-%d' ) days,
+        sum( l.quantity ) AS quantity,
+        sum( l.totalPrice ) AS totalPrice
+        FROM
+        (
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 0 DAY ) days UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 1 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 2 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 3 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 4 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 5 DAY ) UNION
+        SELECT
+        DATE_SUB( curdate(), INTERVAL + 6 DAY )
+        ) AS spo
+        LEFT JOIN (
+        SELECT
+        osr.create_date,
+        si.material_type,
+        si.quantity,
+        si.unit_price * si.quantity AS totalPrice
+        FROM
+        out_stock_record osr
+        LEFT JOIN storehouse_info si ON si.delivery_order_number = osr.CODE
+        ) AS l ON (
+        DATE_FORMAT( l.create_date, '%Y-%m-%d' ) = DATE_FORMAT( spo.days, '%Y-%m-%d' ))
+        GROUP BY
+        days
+    </select>
+</mapper>

@@ -1,0 +1,2 @@
+2022-09-24 00:20:39.895 febs [scheduling-1] INFO  cc.mrbird.febs.common.task.CacheTask - delete expired user
+2022-09-24 01:20:39.900 febs [scheduling-1] INFO  cc.mrbird.febs.common.task.CacheTask - delete expired user
