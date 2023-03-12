@@ -12,10 +12,7 @@
           {{ storehouseData.materialName !== null ? storehouseData.materialName : '- -' }}
         </a-col>
         <a-col :span="8"><b>物料类型：</b>
-          <span v-if="storehouseData.materialType === 1">食品生鲜</span>
-          <span v-if="storehouseData.materialType === 2">家用电器</span>
-          <span v-if="storehouseData.materialType === 3">办公用品</span>
-          <span v-if="storehouseData.materialType === 4">日常杂货</span>
+          <span>{{ storehouseData.materialTypeName }}</span>
         </a-col>
         <a-col :span="8"><b>物料类型：</b>
           {{ storehouseData.model !== null ? storehouseData.model : '- -' }}
@@ -58,10 +55,7 @@
                   </a-tooltip>
                 </template>
                 <template slot="typeIdShow" slot-scope="text, record">
-                  <span v-if="record.materialType == 1">食品生鲜</span>
-                  <span v-if="record.materialType == 2">家用电器</span>
-                  <span v-if="record.materialType == 3">办公用品</span>
-                  <span v-if="record.materialType == 4">日常杂货</span>
+                  <span>{{ record.materialTypeName }}</span>
                 </template>
               </a-table>
             </a-tab-pane>
@@ -84,10 +78,7 @@
                   </a-tooltip>
                 </template>
                 <template slot="typeIdShow" slot-scope="text, record">
-                  <span v-if="record.materialType == 1">食品生鲜</span>
-                  <span v-if="record.materialType == 2">家用电器</span>
-                  <span v-if="record.materialType == 3">办公用品</span>
-                  <span v-if="record.materialType == 4">日常杂货</span>
+                  <span>{{ record.materialTypeName }}</span>
                 </template>
               </a-table>
             </a-tab-pane>

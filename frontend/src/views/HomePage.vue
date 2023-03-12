@@ -217,10 +217,12 @@ export default {
           let index = i + 1
           series.push(this.materialTypeRate[index + 'price'] ? this.materialTypeRate[index + 'price'] : 0)
         }
-        Object.keys(this.materialTypeRate.materialSalesMapTop).map(key => {
-          series1.push(this.materialTypeRate.materialSalesMapTop[key])
-          chartOptions1.push(key)
-        })
+        if (this.materialTypeRate.materialSalesMapTop) {
+          Object.keys(this.materialTypeRate.materialSalesMapTop).map(key => {
+            series1.push(this.materialTypeRate.materialSalesMapTop[key])
+            chartOptions1.push(key)
+          })
+        }
         setTimeout(() => {
           this.series3 = series
           this.series1[0].data = series1
@@ -264,12 +266,6 @@ export default {
     }
   },
   mounted () {
-    let myDate = new Date()
-    let year = myDate.getFullYear()
-    let month = myDate.getMonth()
-    this.getStatisticsByMonth(year, month + 1)
-    this.getMaterialTypeRate(year, month + 1)
-    this.getLastSevenDaysCount()
     this.welcomeMessage = this.welcome()
     this.$get(`index/${this.user.username}`).then((r) => {
       let data = r.data.data
@@ -329,6 +325,12 @@ export default {
       console.error(r)
       this.$message.error('获取首页信息失败')
     })
+    // let myDate = new Date()
+    // let year = myDate.getFullYear()
+    // let month = myDate.getMonth()
+    // this.getStatisticsByMonth(year, month + 1)
+    // this.getMaterialTypeRate(year, month + 1)
+    // this.getLastSevenDaysCount()
   }
 }
 </script>

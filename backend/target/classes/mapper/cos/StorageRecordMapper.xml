@@ -48,10 +48,12 @@
         si.create_date AS createDate,
         si.remark,
         si.model,
-        si.unit_price AS unitPrice
+        si.unit_price AS unitPrice,
+        pri.name AS materialTypeName
         FROM storehouse_info si
         LEFT JOIN storage_record sr
         on sr.code = si.inbound_order_number
+        LEFT JOIN product_type_info pri ON (pri.id = si.material_type)
         WHERE 1 = 1 and sr.code = #{code}
         ORDER BY si.create_date DESC
     </select>

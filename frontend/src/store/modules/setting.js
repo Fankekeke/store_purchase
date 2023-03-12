@@ -12,7 +12,7 @@ export default {
     isMobile: false,
     theme: db.get('THEME', 'light'),
     layout: db.get('LAYOUT', 'side'),
-    systemName: '超商成本核算系统',
+    systemName: '超商成本采购系统',
     copyright: `${new Date().getFullYear()} <a href="https://berserker287.github.io/" target="_blank">FanK</a>`,
     multipage: getBooleanValue(db.get('MULTIPAGE'), true),
     fixSiderbar: getBooleanValue(db.get('FIX_SIDERBAR'), true),
