@@ -7,28 +7,18 @@
           <div :class="advanced ? null: 'fold'">
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="物料名称"
+                label="产品名称"
                 :labelCol="{span: 4}"
                 :wrapperCol="{span: 18, offset: 2}">
-                <a-input v-model="queryParams.materialName"/>
+                <a-input v-model="queryParams.name"/>
               </a-form-item>
             </a-col>
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="型号"
+                label="类型编号"
                 :labelCol="{span: 4}"
                 :wrapperCol="{span: 18, offset: 2}">
-                <a-input v-model="queryParams.model"/>
-              </a-form-item>
-            </a-col>
-            <a-col :md="6" :sm="24">
-              <a-form-item
-                label="物料类型"
-                :labelCol="{span: 4}"
-                :wrapperCol="{span: 18, offset: 2}">
-                <a-select v-model="queryParams.materialType" allowClear>
-                  <a-select-option :value="item.id" v-for="(item, index) in productTypeList" :key="index">{{ item.name }}</a-select-option>
-                </a-select>
+                <a-input v-model="queryParams.code"/>
               </a-form-item>
             </a-col>
           </div>
@@ -41,8 +31,8 @@
     </div>
     <div>
       <div class="operator">
-        <a-button type="primary" ghost @click="add">出库</a-button>
-        <a-button @click="replenishment">盘库</a-button>
+        <a-button type="primary" ghost @click="add">新增</a-button>
+        <a-button @click="batchDelete">删除</a-button>
       </div>
       <!-- 表格区域 -->
       <a-table ref="TableInfo"
@@ -54,73 +44,45 @@
                :rowSelection="{selectedRowKeys: selectedRowKeys, onChange: onSelectChange}"
                :scroll="{ x: 900 }"
                @change="handleTableChange">
-        <template slot="titleShow" slot-scope="text, record">
-          <template>
-            <a-badge status="processing"/>
-            <a-tooltip>
-              <template slot="title">
-                {{ record.title }}
-              </template>
-              {{ record.title.slice(0, 8) }} ...
-            </a-tooltip>
-          </template>
-        </template>
-        <template slot="contentShow" slot-scope="text, record">
-          <template>
-            <a-tooltip>s
-              <template slot="title">
-                {{ record.content }}
-              </template>
-              {{ record.content.slice(0, 30) }} ...
-            </a-tooltip>
-          </template>
-        </template>
         <template slot="operation" slot-scope="text, record">
-          <a-icon type="bulb" theme="twoTone" twoToneColor="#4a9ff5" @click="view(record)" title="详 情" style="margin-right: 15px"></a-icon>
+          <a-icon type="setting" theme="twoTone" twoToneColor="#4a9ff5" @click="edit(record)" title="修 改"></a-icon>
         </template>
       </a-table>
     </div>
-    <storehouse-view
-      @close="handlestorehouseViewClose"
-      :storehouseShow="storehouseView.visiable"
-      :storehouseData="storehouseView.data">
-    </storehouse-view>
-    <stock-out
-      @close="handleStockoutClose"
-      @success="handleStockoutSuccess"
-      :stockoutData="stockout.data"
-      :stockoutVisiable="stockout.visiable">
-    </stock-out>
+    <type-add
+      v-if="typeAdd.visiable"
+      @close="handletypeAddClose"
+      @success="handletypeAddSuccess"
+      :typeAddVisiable="typeAdd.visiable">
+    </type-add>
+    <type-edit
+      ref="typeEdit"
+      @close="handletypeEditClose"
+      @success="handletypeEditSuccess"
+      :typeEditVisiable="typeEdit.visiable">
+    </type-edit>
   </a-card>
 </template>
 
 <script>
 import RangeDate from '@/components/datetime/RangeDate'
+import typeAdd from './TypeAdd.vue'
+import typeEdit from './TypeEdit.vue'
 import {mapState} from 'vuex'
 import moment from 'moment'
-import StockOut from './StockOut'
-import storehouseView from './StorehouseView'
 moment.locale('zh-cn')
 
 export default {
-  name: 'storehouse',
-  components: {storehouseView, StockOut, RangeDate},
+  name: 'type',
+  components: {typeAdd, typeEdit, RangeDate},
   data () {
     return {
       advanced: false,
-      storehouseAdd: {
+      typeAdd: {
         visiable: false
       },
-      storehouseEdit: {
+      typeEdit: {
         visiable: false
-      },
-      storehouseView: {
-        visiable: false,
-        data: null
-      },
-      stockout: {
-        visiable: false,
-        data: null
       },
       queryParams: {},
       filteredInfo: null,
@@ -137,7 +99,7 @@ export default {
         showSizeChanger: true,
         showTotal: (total, range) => `显示 ${range[0]} ~ ${range[1]} 条记录，共 ${total} 条记录`
       },
-      productTypeList: []
+      userList: []
     }
   },
   computed: {
@@ -146,35 +108,13 @@ export default {
     }),
     columns () {
       return [{
-        title: '物料名称',
-        dataIndex: 'materialName'
+        title: '产品类型名称',
+        dataIndex: 'name'
       }, {
-        title: '物料类型',
-        dataIndex: 'materialTypeName',
-        customRender: (text, row, index) => {
-          if (text !== null) {
-            return text
-          } else {
-            return '- -'
-          }
-        }
+        title: '产品类型编号',
+        dataIndex: 'code'
       }, {
-        title: '型号',
-        dataIndex: 'model'
-      }, {
-        title: '当前库存',
-        dataIndex: 'quantity',
-        customRender: (text, row, index) => {
-          return text + row.measurementUnit
-        }
-      }, {
-        title: '单价',
-        dataIndex: 'unitPrice',
-        customRender: (text, row, index) => {
-          return text + '元'
-        }
-      }, {
-        title: '操作时间',
+        title: '发布时间',
         dataIndex: 'createDate',
         customRender: (text, row, index) => {
           if (text !== null) {
@@ -192,81 +132,36 @@ export default {
   },
   mounted () {
     this.fetch()
-    this.selectProductType()
   },
   methods: {
-    selectProductType () {
-      this.$get(`/cos/product-type-info/list`).then((r) => {
-        this.productTypeList = r.data.data
-      })
+    onSelectChange (selectedRowKeys) {
+      this.selectedRowKeys = selectedRowKeys
     },
     toggleAdvanced () {
       this.advanced = !this.advanced
     },
-    view (record) {
-      this.storehouseView.visiable = true
-      this.storehouseView.data = record
-    },
-    onSelectChange (selectedRowKeys, selectedRows) {
-      selectedRows.forEach(item => {
-        if (item.amount === 0) {
-          this.$message.warning('该物品没有库存！')
-          return false
-        }
-      })
-      this.selectedRowKeys = selectedRowKeys
-      this.selectedRows = selectedRows
-    },
-    replenishment () {
-      this.$get('/cos/storehouse-info/replenishment').then((r) => {
-        this.$message.success('等在盘库~请稍等')
-      })
-    },
     add () {
-      if (!this.selectedRowKeys.length) {
-        this.$message.warning('请选择需要出库的物品')
-        return
-      }
-      let goods = this.selectedRows
-      goods.forEach(item => {
-        item.max = item.quantity
-        item.materialType = item.materialType.toString()
-      })
-      this.stockout.data = JSON.parse(JSON.stringify(goods))
-      this.stockout.visiable = true
+      this.typeAdd.visiable = true
     },
-    handleStockoutClose () {
-      this.stockout.visiable = false
+    handletypeAddClose () {
+      this.typeAdd.visiable = false
     },
-    handleStockoutSuccess () {
-      this.stockout.visiable = false
-      this.selectedRows = []
-      this.selectedRowKeys = []
-      this.$message.success('出库成功')
-      this.search()
-    },
-    handlestorehouseAddClose () {
-      this.storehouseAdd.visiable = false
-    },
-    handlestorehouseAddSuccess () {
-      this.storehouseAdd.visiable = false
-      this.$message.success('更新成功')
+    handletypeAddSuccess () {
+      this.typeAdd.visiable = false
+      this.$message.success('新增产品类型成功')
       this.search()
     },
     edit (record) {
-      this.$refs.storehouseEdit.setFormValues(record)
-      this.storehouseEdit.visiable = true
+      this.$refs.typeEdit.setFormValues(record)
+      this.typeEdit.visiable = true
     },
-    handlestorehouseEditClose () {
-      this.storehouseEdit.visiable = false
+    handletypeEditClose () {
+      this.typeEdit.visiable = false
     },
-    handlestorehouseEditSuccess () {
-      this.storehouseEdit.visiable = false
-      this.$message.success('修改成功')
+    handletypeEditSuccess () {
+      this.typeEdit.visiable = false
+      this.$message.success('修改产品类型成功')
       this.search()
-    },
-    handlestorehouseViewClose () {
-      this.storehouseView.visiable = false
     },
     handleDeptChange (value) {
       this.queryParams.deptId = value || ''
@@ -283,7 +178,7 @@ export default {
         centered: true,
         onOk () {
           let ids = that.selectedRowKeys.join(',')
-          that.$delete('/cos/storehouse-info/' + ids).then(() => {
+          that.$delete('/cos/product-type-info/' + ids).then(() => {
             that.$message.success('删除成功')
             that.selectedRowKeys = []
             that.search()
@@ -353,10 +248,7 @@ export default {
         params.size = this.pagination.defaultPageSize
         params.current = this.pagination.defaultCurrent
       }
-      if (params.materialType === undefined) {
-        delete params.materialType
-      }
-      this.$get('/cos/storehouse-info/page', {
+      this.$get('/cos/product-type-info/page', {
         ...params
       }).then((r) => {
         let data = r.data.data

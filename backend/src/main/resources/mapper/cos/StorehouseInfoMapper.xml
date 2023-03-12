@@ -15,8 +15,10 @@
         si.model,
         si.unit_price AS unitPrice,
         si.inbound_order_number AS inboundOrderNumber,
-        si.delivery_order_number AS deliveryOrderNumber
+        si.delivery_order_number AS deliveryOrderNumber,
+        pri.name AS materialTypeName
         FROM storehouse_info si
+        LEFT JOIN product_type_info pri ON (pri.id = si.material_type)
         WHERE si.transaction_type = 0
         <if test="storehouseInfo.materialName != null and storehouseInfo.materialName != ''">
             and si.material_name LIKE CONCAT('%',#{storehouseInfo.materialName},'%')
@@ -39,6 +41,7 @@
         si.material_type AS materialType,
         si.unit_price AS unitPrice,
         si.quantity,
+        pri.name AS materialTypeName
         <if test="transactionType != null and transactionType == 1">
             si.inbound_order_number AS orderNumber,
             sr.create_date AS createDate
@@ -54,6 +57,7 @@
         <if test="transactionType != null and transactionType == 2">
             LEFT JOIN out_stock_record osr on osr.code = si.delivery_order_number
         </if>
+        LEFT JOIN product_type_info pri ON (pri.id = si.material_type)
         WHERE 1 = 1
         AND si.transaction_type = #{transactionType}
         AND si.material_name = #{name}

@@ -24,10 +24,7 @@
               'purchaseType',
               { rules: [{ required: true, message: '请输入可供采购类型!' }] }
               ]">
-              <a-select-option value="1">食品生鲜</a-select-option>
-              <a-select-option value="2">家用电器</a-select-option>
-              <a-select-option value="3">办公用品</a-select-option>
-              <a-select-option value="4">日常杂货</a-select-option>
+              <a-select-option :value="item.id" v-for="(item, index) in productTypeList" :key="index">{{ item.name }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
@@ -75,18 +72,24 @@ export default {
       loading: false,
       fileList: [],
       previewVisible: false,
-      previewImage: ''
+      previewImage: '',
+      productTypeList: []
     }
   },
+  mounted () {
+    this.selectProductType()
+  },
   methods: {
+    selectProductType () {
+      this.$get(`/cos/product-type-info/list`).then((r) => {
+        this.productTypeList = r.data.data
+      })
+    },
     setFormValues ({...supplier}) {
       this.rowId = supplier.id
       let fields = ['supplierName', 'purchaseType', 'remark']
       let obj = {}
       Object.keys(supplier).forEach((key) => {
-        if (key === 'purchaseType') {
-          supplier[key] = supplier[key].toString()
-        }
         if (fields.indexOf(key) !== -1) {
           this.form.getFieldDecorator(key)
           obj[key] = supplier[key]

@@ -152,7 +152,10 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         List<OrderInfo> orderInfoList = baseMapper.selectOrderInfoByDate(year, month);
         // 获取订单详情
         List<String> orderNumberList = orderInfoList.stream().map(OrderInfo::getCode).collect(Collectors.toList());
-        List<StorehouseInfo> storehouseInfoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().in(StorehouseInfo::getDeliveryOrderNumber, orderNumberList));
+        List<StorehouseInfo> storehouseInfoList = new ArrayList<>();
+        if (CollectionUtil.isNotEmpty(orderNumberList)) {
+            storehouseInfoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().in(StorehouseInfo::getDeliveryOrderNumber, orderNumberList));
+        }
         Map<String, List<StorehouseInfo>> materialSalesMap = storehouseInfoList.stream().collect(Collectors.groupingBy(StorehouseInfo::getMaterialName));
         Map<String, Object> materialSalesMapTop = new HashMap<>();
         materialSalesMap.forEach((key, value) -> {
@@ -177,6 +180,9 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             if (CollectionUtil.isNotEmpty(item)) {
                 result.put(key + "orderNumber", item.stream().map(StorehouseInfo::getQuantity).reduce(BigDecimal.ZERO,BigDecimal::add));
                 result.put(key + "price", item.stream().map(p -> p.getQuantity().multiply(p.getUnitPrice())).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+            } else {
+                result.put(key + "orderNumber", BigDecimal.ZERO);
+                result.put(key + "price", BigDecimal.ZERO);
             }
         });
         return result;

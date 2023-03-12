@@ -79,10 +79,7 @@
             </template>
             <template slot="typeIdShow" slot-scope="text, record">
               <a-select v-model="record.materialType" allowClear>
-                <a-select-option value="1">食品生鲜</a-select-option>
-                <a-select-option value="2">家用电器</a-select-option>
-                <a-select-option value="3">办公用品</a-select-option>
-                <a-select-option value="4">日常杂货</a-select-option>
+                <a-select-option :value="item.id" v-for="(item, index) in productTypeList" :key="index">{{ item.name }}</a-select-option>
               </a-select>
             </template>
             <template slot="unitShow" slot-scope="text, record">
@@ -175,7 +172,8 @@ export default {
       staffList: [],
       handler: null,
       custodian: null,
-      materialList: []
+      materialList: [],
+      productTypeList: []
     }
   },
   watch: {
@@ -187,8 +185,14 @@ export default {
   },
   mounted () {
     this.getStaffList()
+    this.selectProductType()
   },
   methods: {
+    selectProductType () {
+      this.$get(`/cos/product-type-info/list`).then((r) => {
+        this.productTypeList = r.data.data
+      })
+    },
     getStaffList () {
       this.$get('/cos/staff-info/list').then((r) => {
         this.staffList = r.data.data

@@ -9,9 +9,11 @@
         si.purchase_type AS purchaseType,
         si.supplier_name AS supplierName,
         si.remark,
-        si.create_date AS createDate
+        si.create_date AS createDate,
+        pri.name AS purchaseTypeName
         FROM
         supplier_info si
+        LEFT JOIN product_type_info pri ON (pri.id = si.purchase_type)
         WHERE 1 = 1
         <if test="supplierInfo.supplierName != null and supplierInfo.supplierName != ''">
             and si.supplier_name LIKE CONCAT('%',#{supplierInfo.supplierName},'%')

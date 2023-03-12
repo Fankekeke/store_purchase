@@ -1,7 +1,0 @@
-2022-09-19 21:05:07.910 febs [main] ERROR c.m.f.common.runner.CacheInitRunner - 缓存初始化失败，Could not get a resource from the pool
-2022-09-19 21:05:07.910 febs [main] ERROR c.m.f.common.runner.CacheInitRunner -  ____   __    _   _ 
-2022-09-19 21:05:07.910 febs [main] ERROR c.m.f.common.runner.CacheInitRunner - | |_   / /\  | | | |
-2022-09-19 21:05:07.910 febs [main] ERROR c.m.f.common.runner.CacheInitRunner - |_|   /_/--\ |_| |_|__
-2022-09-19 21:05:07.910 febs [main] ERROR c.m.f.common.runner.CacheInitRunner -                         
-2022-09-19 21:05:07.910 febs [main] ERROR c.m.f.common.runner.CacheInitRunner - FEBS启动失败              
-2022-09-19 21:05:07.910 febs [main] ERROR c.m.f.common.runner.CacheInitRunner - Redis连接异常，请检查Redis连接配置并确保Redis服务已启动

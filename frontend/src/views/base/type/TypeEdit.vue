@@ -1,39 +1,26 @@
 <template>
-  <a-modal v-model="show" title="新增供应商" @cancel="onClose" :width="800">
+  <a-modal v-model="show" title="修改产品类型" @cancel="onClose" :width="800">
     <template slot="footer">
       <a-button key="back" @click="onClose">
         取消
       </a-button>
       <a-button key="submit" type="primary" :loading="loading" @click="handleSubmit">
-        提交
+        修改
       </a-button>
     </template>
     <a-form :form="form" layout="vertical">
-      <a-row :gutter="20">
-        <a-col :span="8">
-          <a-form-item label='供应商名称' v-bind="formItemLayout">
-            <a-input v-decorator="[
-            'supplierName',
-            { rules: [{ required: true, message: '请输入供应商名称!' }] }
+      <a-form :form="form" layout="vertical">
+        <a-row :gutter="20">
+          <a-col :span="24">
+            <a-form-item label='产品类型名称' v-bind="formItemLayout">
+              <a-input v-decorator="[
+            'name',
+            { rules: [{ required: true, message: '请输入产品类型名称!' }] }
             ]"/>
-          </a-form-item>
-        </a-col>
-        <a-col :span="8">
-          <a-form-item label='可供采购类型' v-bind="formItemLayout">
-            <a-select v-decorator="[
-              'purchaseType',
-              { rules: [{ required: true, message: '请输入可供采购类型!' }] }
-              ]">
-              <a-select-option :value="item.id" v-for="(item, index) in productTypeList" :key="index">{{ item.name }}</a-select-option>
-            </a-select>
-          </a-form-item>
-        </a-col>
-        <a-col :span="24">
-          <a-form-item label="备注">
-            <a-textarea placeholder="Basic usage" :rows="4" v-decorator="['remark']"/>
-          </a-form-item>
-        </a-col>
-      </a-row>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
     </a-form>
   </a-modal>
 </template>
@@ -53,9 +40,9 @@ const formItemLayout = {
   wrapperCol: { span: 24 }
 }
 export default {
-  name: 'supplierAdd',
+  name: 'typeEdit',
   props: {
-    supplierAddVisiable: {
+    typeEditVisiable: {
       default: false
     }
   },
@@ -65,7 +52,7 @@ export default {
     }),
     show: {
       get: function () {
-        return this.supplierAddVisiable
+        return this.typeEditVisiable
       },
       set: function () {
       }
@@ -73,24 +60,16 @@ export default {
   },
   data () {
     return {
+      rowId: null,
       formItemLayout,
       form: this.$form.createForm(this),
       loading: false,
       fileList: [],
       previewVisible: false,
-      previewImage: '',
-      productTypeList: []
+      previewImage: ''
     }
   },
-  mounted () {
-    this.selectProductType()
-  },
   methods: {
-    selectProductType () {
-      this.$get(`/cos/product-type-info/list`).then((r) => {
-        this.productTypeList = r.data.data
-      })
-    },
     handleCancel () {
       this.previewVisible = false
     },
@@ -104,6 +83,31 @@ export default {
     picHandleChange ({ fileList }) {
       this.fileList = fileList
     },
+    imagesInit (images) {
+      if (images !== null && images !== '') {
+        let imageList = []
+        images.split(',').forEach((image, index) => {
+          imageList.push({uid: index, name: image, status: 'done', url: 'http://127.0.0.1:9527/imagesWeb/' + image})
+        })
+        this.fileList = imageList
+      }
+    },
+    setFormValues ({...type}) {
+      this.rowId = type.id
+      let fields = ['name']
+      let obj = {}
+      Object.keys(type).forEach((key) => {
+        if (key === 'images') {
+          this.fileList = []
+          this.imagesInit(type['images'])
+        }
+        if (fields.indexOf(key) !== -1) {
+          this.form.getFieldDecorator(key)
+          obj[key] = type[key]
+        }
+      })
+      this.form.setFieldsValue(obj)
+    },
     reset () {
       this.loading = false
       this.form.resetFields()
@@ -114,9 +118,10 @@ export default {
     },
     handleSubmit () {
       this.form.validateFields((err, values) => {
+        values.id = this.rowId
         if (!err) {
           this.loading = true
-          this.$post('/cos/supplier-info', {
+          this.$put('/cos/product-type-info', {
             ...values
           }).then((r) => {
             this.reset()

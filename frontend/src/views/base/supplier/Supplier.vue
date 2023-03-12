@@ -13,19 +13,6 @@
                 <a-input v-model="queryParams.supplierName"/>
               </a-form-item>
             </a-col>
-            <a-col :md="6" :sm="24">
-              <a-form-item
-                label="可供采购类型"
-                :labelCol="{span: 6}"
-                :wrapperCol="{span: 17, offset: 1}">
-                <a-select v-model="queryParams.purchaseType" allowClear>
-                  <a-select-option value="1">食品生鲜</a-select-option>
-                  <a-select-option value="2">家用电器</a-select-option>
-                  <a-select-option value="3">办公用品</a-select-option>
-                  <a-select-option value="4">日常杂货</a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
           </div>
           <span style="float: right; margin-top: 3px;">
             <a-button type="primary" @click="search">查询</a-button>
@@ -127,22 +114,22 @@ export default {
         dataIndex: 'supplierName'
       }, {
         title: '创建时间',
-        dataIndex: 'createDate'
+        dataIndex: 'createDate',
+        customRender: (text, row, index) => {
+          if (text !== null) {
+            return text
+          } else {
+            return '- -'
+          }
+        }
       }, {
         title: '可供采购类型',
-        dataIndex: 'purchaseType',
+        dataIndex: 'purchaseTypeName',
         customRender: (text, row, index) => {
-          switch (text) {
-            case '1':
-              return <a-tag>食品生鲜</a-tag>
-            case '2':
-              return <a-tag>家用电器</a-tag>
-            case '3':
-              return <a-tag>办公用品</a-tag>
-            case '4':
-              return <a-tag>日常杂货</a-tag>
-            default:
-              return '- -'
+          if (text !== null) {
+            return text
+          } else {
+            return '- -'
           }
         }
       }, {

@@ -23,7 +23,7 @@ public class FileController {
     @RequestMapping("/fileUpload")
     public String upload(@RequestParam("avatar") MultipartFile file) {
         // 1定义要上传文件 的存放路径
-        String localPath = "E:/Project/超商成本核算管理系统/store_cost/file";
+        String localPath = "G:/Project/超市采购管理系统/store_purchase/file";
         // 2获得文件名字
         String fileName = file.getOriginalFilename();
         // 2上传失败提示
