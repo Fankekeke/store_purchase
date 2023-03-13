@@ -54,6 +54,11 @@ public class OutStockRecord implements Serializable {
     private String remark;
 
     /**
+     * 状态（1.已创建 2.已出库）
+     */
+    private String status;
+
+    /**
      * 物料信息
      */
     @TableField(exist = false)

@@ -11,6 +11,7 @@
         sr.custodian_code AS custodianCode,
         sr.total_price AS totalPrice,
         sr.create_date AS createDate,
+        sr.status,
         sr.remark,
         si1.staff_name AS handlerName,
         si2.staff_name AS custodianName,
