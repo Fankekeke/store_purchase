@@ -9,6 +9,7 @@
         osr.handler_code AS handlerCode,
         osr.custodian_code AS custodianCode,
         osr.create_date AS createDate,
+        osr.status,
         osr.remark,
         si1.staff_name AS handlerName,
         si2.staff_name AS custodianName,
