@@ -69,7 +69,7 @@ public class StorehouseInfoServiceImpl extends ServiceImpl<StorehouseInfoMapper,
     public void diskLibrary() {
         List<LinkedHashMap<String, Object>> result = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        List<StorehouseInfo> storehouseInfoList = this.list(Wrappers.<StorehouseInfo>lambdaQuery().eq(StorehouseInfo::getTransactionType, 0).lt(StorehouseInfo::getQuantity, 50));
+        List<StorehouseInfo> storehouseInfoList = this.list(Wrappers.<StorehouseInfo>lambdaQuery().eq(StorehouseInfo::getTransactionType, 0).lt(StorehouseInfo::getQuantity, 5));
         storehouseInfoList.forEach(item -> {
             LinkedHashMap<String, Object> resultItem = new LinkedHashMap<String, Object>() {
                 {
