@@ -325,12 +325,12 @@ export default {
       console.error(r)
       this.$message.error('获取首页信息失败')
     })
-    // let myDate = new Date()
-    // let year = myDate.getFullYear()
-    // let month = myDate.getMonth()
-    // this.getStatisticsByMonth(year, month + 1)
-    // this.getMaterialTypeRate(year, month + 1)
-    // this.getLastSevenDaysCount()
+    let myDate = new Date()
+    let year = myDate.getFullYear()
+    let month = myDate.getMonth()
+    this.getStatisticsByMonth(year, month + 1)
+    this.getMaterialTypeRate(year, month + 1)
+    this.getLastSevenDaysCount()
   }
 }
 </script>
