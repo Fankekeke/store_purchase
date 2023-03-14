@@ -48,7 +48,7 @@ public class OutStockRecordController {
      * 查询出库记录详情
      *
      * @param code 出库单号
-     * @return 结果
+     * @return 结果1
      */
     @GetMapping("/{code}")
     public R detail(@PathVariable("code") String code) {
