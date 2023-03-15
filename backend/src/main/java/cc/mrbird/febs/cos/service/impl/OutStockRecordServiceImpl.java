@@ -1,6 +1,7 @@
 package cc.mrbird.febs.cos.service.impl;
 
 import cc.mrbird.febs.common.exception.FebsException;
+import cc.mrbird.febs.cos.entity.OrderInfo;
 import cc.mrbird.febs.cos.entity.OutStockRecord;
 import cc.mrbird.febs.cos.dao.OutStockRecordMapper;
 import cc.mrbird.febs.cos.entity.StorehouseInfo;
@@ -91,10 +92,37 @@ public class OutStockRecordServiceImpl extends ServiceImpl<OutStockRecordMapper,
     @Override
     @Transactional(rollbackFor = {Exception.class})
     public boolean saveOutStock(OutStockRecord outStockRecord) {
-        // 设置出库编号
+        // 设置出库状态
+        outStockRecord.setStatus("1");
+        // 添加订单编号
         outStockRecord.setCode("OUT-" + System.currentTimeMillis());
-        List<StorehouseInfo> infoList = JSONUtil.toList(outStockRecord.getMaterial(), StorehouseInfo.class);
         outStockRecord.setCreateDate(DateUtil.formatDateTime(new Date()));
+        List<StorehouseInfo> infoList = JSONUtil.toList(outStockRecord.getMaterial(), StorehouseInfo.class);
+        BigDecimal totalPrice = infoList.stream().map(p -> p.getQuantity().multiply(p.getUnitPrice())).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        outStockRecord.setTotalPrice(totalPrice);
+        // 设置出库编号
+        infoList.forEach(e -> {
+            e.setTransactionType(2);
+            e.setDeliveryOrderNumber(outStockRecord.getCode());
+            e.setCreateDate(DateUtil.formatDateTime(new Date()));
+            e.setStatus("1");
+        });
+        storehouseInfoService.saveBatch(infoList);
+        // 添加订单信息
+        return this.save(outStockRecord);
+    }
+
+    /**
+     * 出库审核
+     *
+     * @param code 出库单号
+     * @return 结果
+     */
+    @Override
+    public boolean storeOutAudit(String code) {
+        // 根据单号获取物品信息
+        List<StorehouseInfo> infoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().eq(StorehouseInfo::getDeliveryOrderNumber, code));
+
         // 获取物料库存
         List<String> materialNameList = infoList.stream().map(StorehouseInfo::getMaterialName).distinct().collect(Collectors.toList());
         List<StorehouseInfo> storehouseInfoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().in(StorehouseInfo::getMaterialName, materialNameList).eq(StorehouseInfo::getTransactionType, 0));
@@ -102,19 +130,19 @@ public class OutStockRecordServiceImpl extends ServiceImpl<OutStockRecordMapper,
         Map<String, StorehouseInfo> storehouseInfoMap = storehouseInfoList.stream().collect(Collectors.toMap(StorehouseInfo::getMaterialName, e -> e));
         List<StorehouseInfo> inStockList = new ArrayList<>();
         infoList.forEach(material -> {
-            // 出库单号
-            material.setDeliveryOrderNumber(outStockRecord.getCode());
             // 库房类型
             material.setTransactionType(2);
+            material.setStatus("2");
             StorehouseInfo stockItem = storehouseInfoMap.get(material.getMaterialName());
             if (stockItem != null) {
                 stockItem.setQuantity(stockItem.getQuantity().subtract(material.getQuantity()));
+                material.setStatus(null);
                 inStockList.add(stockItem);
             }
         });
         storehouseInfoService.updateBatchById(inStockList);
-        storehouseInfoService.saveBatch(infoList);
-        return this.save(outStockRecord);
+        storehouseInfoService.updateBatchById(infoList);
+        return this.update(Wrappers.<OutStockRecord>lambdaUpdate().set(OutStockRecord::getStatus, 2).eq(OutStockRecord::getCode, code));
     }
 
     /**

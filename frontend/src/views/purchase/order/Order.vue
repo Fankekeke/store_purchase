@@ -7,7 +7,7 @@
           <div :class="advanced ? null: 'fold'">
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="订单编号"
+                label="出库单号"
                 :labelCol="{span: 4}"
                 :wrapperCol="{span: 18, offset: 2}">
                 <a-input v-model="queryParams.code"/>
@@ -15,10 +15,18 @@
             </a-col>
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="经手人"
+                label="保管人"
                 :labelCol="{span: 4}"
                 :wrapperCol="{span: 18, offset: 2}">
-                <a-input v-model="queryParams.handlerName"/>
+                <a-input v-model="queryParams.custodianName"/>
+              </a-form-item>
+            </a-col>
+            <a-col :md="6" :sm="24">
+              <a-form-item
+                label="供应商"
+                :labelCol="{span: 4}"
+                :wrapperCol="{span: 18, offset: 2}">
+                <a-input v-model="queryParams.supplierName"/>
               </a-form-item>
             </a-col>
           </div>
@@ -31,7 +39,6 @@
     </div>
     <div>
       <div class="operator">
-        <a-button type="primary" ghost @click="add">添加订单</a-button>
         <a-button @click="batchDelete">删除</a-button>
       </div>
       <!-- 表格区域 -->
@@ -70,12 +77,6 @@
           <a-icon type="download" @click="downLoad(record)" title="下 载"></a-icon>
         </template>
       </a-table>
-      <order-add
-        v-if="requestAdd.visiable"
-        @close="handleRequestAddClose"
-        @success="handleRequestAddSuccess"
-        :requestAddVisiable="requestAdd.visiable">
-      </order-add>
       <record-view
         @close="handlerecordViewClose"
         :recordShow="recordView.visiable"
@@ -88,7 +89,6 @@
 <script>
 import RangeDate from '@/components/datetime/RangeDate'
 import RecordView from './RecordView'
-import OrderAdd from './OrderAdd'
 import {mapState} from 'vuex'
 import { newSpread, floatForm, floatReset, saveExcel } from '@/utils/spreadJS'
 import moment from 'moment'
@@ -96,7 +96,7 @@ moment.locale('zh-cn')
 
 export default {
   name: 'request',
-  components: {RecordView, RangeDate, OrderAdd},
+  components: {RecordView, RangeDate},
   data () {
     return {
       advanced: false,
@@ -134,29 +134,40 @@ export default {
     }),
     columns () {
       return [{
-        title: '订单编号',
+        title: '出库单号',
         dataIndex: 'code'
       }, {
-        title: '订单总价',
+        title: '状态',
+        dataIndex: 'status',
+        customRender: (text, row, index) => {
+          switch (text) {
+            case 1:
+              return <a-tag color="red">等待审核</a-tag>
+            case 2:
+              return <a-tag color="green">已出库</a-tag>
+            default:
+              return '- -'
+          }
+        }
+      }, {
+        title: '总价格',
         dataIndex: 'totalPrice',
+        customRender: (text, row, index) => {
+          if (text !== null) {
+            return text + '元'
+          } else {
+            return '- -'
+          }
+        }
+      }, {
+        title: '保管人',
+        dataIndex: 'custodianName',
         customRender: (text, row, index) => {
           if (text !== null) {
             return text
           } else {
             return '- -'
           }
-        }
-      }, {
-        title: '照片',
-        dataIndex: 'image',
-        customRender: (text, record, index) => {
-          if (!record.handlerAvatar) return <a-avatar shape="square" icon="user" />
-          return <a-popover>
-            <template slot="content">
-              <a-avatar shape="square" size={132} icon="user" src={ 'http://127.0.0.1:9527/imagesWeb/' + record.handlerAvatar } />
-            </template>
-            <a-avatar shape="square" icon="user" src={ 'http://127.0.0.1:9527/imagesWeb/' + record.handlerAvatar } />
-          </a-popover>
         }
       }, {
         title: '经手人',
@@ -169,8 +180,12 @@ export default {
           }
         }
       }, {
-        title: '订单时间',
-        dataIndex: 'createTime',
+        title: '备注',
+        dataIndex: 'remark',
+        scopedSlots: {customRender: 'contentShow'}
+      }, {
+        title: '出库时间',
+        dataIndex: 'createDate',
         customRender: (text, row, index) => {
           if (text !== null) {
             return text
@@ -191,16 +206,19 @@ export default {
   methods: {
     downLoad (row) {
       this.$message.loading('正在生成', 0)
-      this.$get(`/cos/order-info/export/${row.code}`).then((r) => {
-        let materialList = r.data.materialMapList
+      this.$get(`/cos/out-stock-record/export/${row.code}`, { num: row.num }).then((r) => {
+        let materialList = r.data.materialList
         let newData = []
         materialList.forEach((item, index) => {
-          newData.push([(index + 1).toFixed(0), item.materialName, item.model !== null ? item.model : '- -', item.measurementUnit !== null ? item.measurementUnit : '- -', item.quantity, item.unitPrice])
+          newData.push([(index + 1).toFixed(0), item.materialName, item.measurementUnit !== null ? item.measurementUnit : '- -', item.quantity, item.unitPrice])
         })
-        let spread = newSpread('orderTable')
-        spread = floatForm(spread, 'orderTable', newData)
-        saveExcel(spread, '订单小票.xlsx')
-        floatReset(spread, 'orderTable', newData.length)
+        let spread = newSpread('outTable')
+        let sheet = spread.getActiveSheet()
+        sheet.suspendPaint()
+        sheet.setValue(2, 12, row.code)
+        spread = floatForm(spread, 'outTable', newData)
+        saveExcel(spread, '出库单.xlsx')
+        floatReset(spread, 'outTable', newData.length)
         this.$message.destroy()
       })
     },
@@ -243,7 +261,7 @@ export default {
         centered: true,
         onOk () {
           let ids = that.selectedRowKeys.join(',')
-          that.$delete('/cos/order-info/' + ids).then(() => {
+          that.$delete('/cos/out-stock-record/' + ids).then(() => {
             that.$message.success('删除成功')
             that.selectedRowKeys = []
             that.search()
@@ -313,7 +331,7 @@ export default {
         params.size = this.pagination.defaultPageSize
         params.current = this.pagination.defaultCurrent
       }
-      this.$get('/cos/order-info/page', {
+      this.$get('/cos/out-stock-record/page', {
         ...params
       }).then((r) => {
         let data = r.data.data

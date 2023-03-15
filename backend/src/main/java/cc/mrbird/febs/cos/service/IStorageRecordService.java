@@ -49,6 +49,14 @@ public interface IStorageRecordService extends IService<StorageRecord> {
     boolean saveStorageRecord(StorageRecord storageRecord);
 
     /**
+     * 入库审核
+     *
+     * @param code 入库单号
+     * @return 结果
+     */
+    boolean storePutAudit(String code);
+
+    /**
      * 分页查询入库统计
      *
      * @param materialType 物料类型

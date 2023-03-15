@@ -41,7 +41,7 @@
         si.material_type AS materialType,
         si.unit_price AS unitPrice,
         si.quantity,
-        pri.name AS materialTypeName
+        pri.name AS materialTypeName,
         <if test="transactionType != null and transactionType == 1">
             si.inbound_order_number AS orderNumber,
             sr.create_date AS createDate

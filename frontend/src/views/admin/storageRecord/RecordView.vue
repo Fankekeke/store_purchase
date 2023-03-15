@@ -1,6 +1,9 @@
 <template>
-  <a-modal v-model="show" title="订单详情" @cancel="onClose" :width="900">
+  <a-modal v-model="show" title="入库详情" @cancel="onClose" :width="900">
     <template slot="footer">
+      <a-button key="back" @click="audit" v-if="recordData != null && recordData.status == 1">
+        入库
+      </a-button>
       <a-button key="back" @click="onClose" type="danger">
         关闭
       </a-button>
@@ -8,30 +11,35 @@
     <div style="font-size: 13px;font-family: SimHei" v-if="recordData !== null">
       <a-row style="padding-left: 24px;padding-right: 24px;">
         <a-col style="margin-bottom: 15px"><span style="font-size: 15px;font-weight: 650;color: #000c17">基础信息</span></a-col>
-        <a-col :span="8"><b>出库单号：</b>
+        <a-col :span="8"><b>入库单号：</b>
           {{ recordData.code !== null ? recordData.code : '- -' }}
+        </a-col>
+        <a-col :span="8"><b>价 格：</b>
+          {{ recordData.totalPrice }} 元
         </a-col>
         <a-col :span="8"><b>保管人：</b>
           {{ recordData.custodianName }}
         </a-col>
+      </a-row>
+      <br/>
+      <a-row style="padding-left: 24px;padding-right: 24px;">
+        <a-col :span="8"><b>入库时间：</b>
+          {{ recordData.createDate !== null ? recordData.createDate : '- -' }}
+        </a-col>
         <a-col :span="8"><b>经手人：</b>
           {{ recordData.handlerName }}
         </a-col>
-      </a-row>
-      <br/>
-      <a-row style="padding-left: 24px;padding-right: 24px;">
-        <a-col :span="8"><b>操作时间：</b>
-          {{ recordData.createDate !== null ? recordData.createDate : '- -' }}
-        </a-col>
-        <a-col :span="8"><b>总价格：</b>
-          {{ recordData.totalPrice !== null ? recordData.totalPrice : '- -' }} 元
+        <a-col :span="8"><b>备 注：</b>
+          {{ recordData.remark }}
         </a-col>
       </a-row>
       <br/>
       <a-row style="padding-left: 24px;padding-right: 24px;">
-        <a-col style="margin-bottom: 15px"><span style="font-size: 15px;font-weight: 650;color: #000c17">备 注</span></a-col>
-        {{ recordData.remark }}
+        <a-col :span="8"><b>供应商：</b>
+          {{ recordData.supplierName !== null ? recordData.supplierName : '- -' }}
+        </a-col>
       </a-row>
+      <br/>
       <br/>
       <a-row style="padding-left: 24px;padding-right: 24px;" :gutter="15">
         <a-col style="margin-bottom: 15px"><span style="font-size: 15px;font-weight: 650;color: #000c17">物品详情</span></a-col>
@@ -131,8 +139,13 @@ export default {
     }
   },
   methods: {
+    audit () {
+      this.$get(`/cos/storage-record/storePutAudit/${this.recordData.code}`).then((r) => {
+        this.$emit('success')
+      })
+    },
     getGoodsByNum (num) {
-      this.$get(`/cos/out-stock-record/${num}`).then((r) => {
+      this.$get(`/cos/storage-record/${num}`).then((r) => {
         this.goodsList = r.data.data
         console.log(this.goodsList)
       })

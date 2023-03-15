@@ -83,7 +83,10 @@ public class StorehouseInfo implements Serializable {
      */
     private String deliveryOrderNumber;
 
-
+    /**
+     * 入库出库状态（1.未更新 2.已更新）
+     */
+    private String status;
 
 
 }

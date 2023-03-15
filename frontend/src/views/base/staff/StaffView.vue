@@ -45,13 +45,6 @@
       </a-row>
       <br/>
       <br/>
-      <a-row style="padding-left: 24px;padding-right: 24px;">
-        <a-col style="margin-bottom: 15px"><span style="font-size: 15px;font-weight: 650;color: #000c17">当前薪资</span></a-col>
-        <a-col :span="24">
-          {{ gain }} 元
-        </a-col>
-      </a-row>
-      <br/>
     </div>
   </a-modal>
 </template>
@@ -92,14 +85,12 @@ export default {
       loading: false,
       fileList: [],
       previewVisible: false,
-      previewImage: '',
-      gain: 0
+      previewImage: ''
     }
   },
   watch: {
     staffShow: function (value) {
       if (value && this.staffData.avatar !== null && this.staffData.avatar !== '') {
-        this.getGainByStaffCode(this.staffData.staffCode)
         this.imagesInit(this.staffData.avatar)
       }
     }

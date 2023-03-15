@@ -35,6 +35,9 @@
         <if test="storageRecord.supplierName != null and storageRecord.supplierName != ''">
             and si.supplier_name LIKE CONCAT('%',#{storageRecord.supplierName},'%')
         </if>
+        <if test="storageRecord.status != null and storageRecord.status != ''">
+            and sr.status = #{storageRecord.status}
+        </if>
         ORDER BY sr.create_date DESC
     </select>
 

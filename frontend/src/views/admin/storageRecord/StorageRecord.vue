@@ -7,24 +7,26 @@
           <div :class="advanced ? null: 'fold'">
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="员工姓名"
+                label="入库单号"
                 :labelCol="{span: 4}"
                 :wrapperCol="{span: 18, offset: 2}">
-                <a-input v-model="queryParams.staffName"/>
+                <a-input v-model="queryParams.code"/>
               </a-form-item>
             </a-col>
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="人员类型"
+                label="保管人"
                 :labelCol="{span: 4}"
                 :wrapperCol="{span: 18, offset: 2}">
-                <a-select v-model="queryParams.staffType" allowClear>
-                  <a-select-option value="1">售货员</a-select-option>
-                  <a-select-option value="2">理货员</a-select-option>
-                  <a-select-option value="3">收银员</a-select-option>
-                  <a-select-option value="4">分拣员</a-select-option>
-                  <a-select-option value="5">杂工</a-select-option>
-                </a-select>
+                <a-input v-model="queryParams.custodianName"/>
+              </a-form-item>
+            </a-col>
+            <a-col :md="6" :sm="24">
+              <a-form-item
+                label="供应商"
+                :labelCol="{span: 4}"
+                :wrapperCol="{span: 18, offset: 2}">
+                <a-input v-model="queryParams.supplierName"/>
               </a-form-item>
             </a-col>
           </div>
@@ -37,7 +39,6 @@
     </div>
     <div>
       <div class="operator">
-        <a-button type="primary" ghost @click="add">新增</a-button>
         <a-button @click="batchDelete">删除</a-button>
       </div>
       <!-- 表格区域 -->
@@ -63,54 +64,58 @@
         </template>
         <template slot="contentShow" slot-scope="text, record">
           <template>
-            <a-tooltip>s
+            <a-tooltip>
               <template slot="title">
-                {{ record.content }}
+                {{ record.remark }}
               </template>
-              {{ record.content.slice(0, 30) }} ...
+              {{ record.remark.slice(0, 30) }} ...
             </a-tooltip>
           </template>
         </template>
         <template slot="operation" slot-scope="text, record">
-          <a-icon type="bulb" theme="twoTone" twoToneColor="#4a9ff5" @click="view(record)" title="详 情" style="margin-right: 15px"></a-icon>
+          <a-icon v-if="record.status == 1" type="audit" @click="audit(record)" title="审 核" style="margin-right: 15px"></a-icon>
+          <a-icon v-if="record.status == 2" type="folder-open" @click="view(record)" title="查 看" style="margin-right: 15px"></a-icon>
+          <a-icon type="download" @click="downLoad(record)" title="下 载"></a-icon>
         </template>
       </a-table>
+      <request-add
+        v-if="requestAdd.visiable"
+        @close="handleRequestAddClose"
+        @success="handleRequestAddSuccess"
+        :requestAddVisiable="requestAdd.visiable">
+      </request-add>
+      <record-view
+        @close="handlerecordViewClose"
+        @success="handlerecordSuccess"
+        :recordShow="recordView.visiable"
+        :recordData="recordView.data">
+      </record-view>
     </div>
-    <salaryGain-add
-      v-if="salaryGainAdd.visiable"
-      @close="handlesalaryGainAddClose"
-      @success="handlesalaryGainAddSuccess"
-      :salaryGainAddVisiable="salaryGainAdd.visiable">
-    </salaryGain-add>
-    <salaryGain-view
-      @close="handlesalaryGainViewClose"
-      :salaryGainShow="salaryGainView.visiable"
-      :salaryGainData="salaryGainView.data">
-    </salaryGain-view>
   </a-card>
 </template>
 
 <script>
 import RangeDate from '@/components/datetime/RangeDate'
-import salaryGainAdd from './SalaryGainAdd'
+import RecordView from './RecordView'
 import {mapState} from 'vuex'
+import { newSpread, floatForm, floatReset, saveExcel } from '@/utils/spreadJS'
 import moment from 'moment'
-import salaryGainView from './SalaryGainView'
+import RequestAdd from './RequestAdd'
 moment.locale('zh-cn')
 
 export default {
-  name: 'salaryGain',
-  components: {salaryGainView, salaryGainAdd, RangeDate},
+  name: 'request',
+  components: {RequestAdd, RecordView, RangeDate},
   data () {
     return {
       advanced: false,
-      salaryGainAdd: {
+      requestAdd: {
         visiable: false
       },
-      salaryGainEdit: {
+      requestEdit: {
         visiable: false
       },
-      salaryGainView: {
+      recordView: {
         visiable: false,
         data: null
       },
@@ -128,7 +133,8 @@ export default {
         showQuickJumper: true,
         showSizeChanger: true,
         showTotal: (total, range) => `显示 ${range[0]} ~ ${range[1]} 条记录，共 ${total} 条记录`
-      }
+      },
+      userList: []
     }
   },
   computed: {
@@ -137,82 +143,67 @@ export default {
     }),
     columns () {
       return [{
-        title: '员工编号',
-        dataIndex: 'staffCode'
+        title: '入库单号',
+        dataIndex: 'code'
       }, {
-        title: '员工姓名',
-        dataIndex: 'staffName'
-      }, {
-        title: '照片',
-        dataIndex: 'image',
-        customRender: (text, record, index) => {
-          if (!record.avatar) return <a-avatar shape="square" icon="user" />
-          return <a-popover>
-            <template slot="content">
-              <a-avatar shape="square" size={132} icon="user" src={ 'http://127.0.0.1:9527/imagesWeb/' + record.avatar } />
-            </template>
-            <a-avatar shape="square" icon="user" src={ 'http://127.0.0.1:9527/imagesWeb/' + record.avatar } />
-          </a-popover>
-        }
-      }, {
-        title: '员工类型',
-        dataIndex: 'staffType',
-        customRender: (text, row, index) => {
-          switch (text) {
-            case 1:
-              return <a-tag>售货员</a-tag>
-            case 2:
-              return <a-tag>理货员</a-tag>
-            case 3:
-              return <a-tag>收银员</a-tag>
-            case 4:
-              return <a-tag>分拣员</a-tag>
-            case 5:
-              return <a-tag>杂工</a-tag>
-            default:
-              return '- -'
-          }
-        }
-      }, {
-        title: '涨幅类型',
-        dataIndex: 'type',
-        customRender: (text, row, index) => {
-          switch (text) {
-            case 0:
-              return <a-tag>初始薪资</a-tag>
-            case 1:
-              return <a-tag>上涨</a-tag>
-            case 2:
-              return <a-tag>跌幅</a-tag>
-            default:
-              return '- -'
-          }
-        }
-      }, {
-        title: '是否当前薪资',
-        dataIndex: 'currentFlag',
-        customRender: (text, row, index) => {
-          switch (text) {
-            case 0:
-              return <a-tag color="red">否</a-tag>
-            case 1:
-              return <a-tag color="blue">是</a-tag>
-            default:
-              return '- -'
-          }
-        }
-      }, {
-        title: '涨幅薪资',
-        dataIndex: 'salary',
+        title: '总价',
+        dataIndex: 'totalPrice',
         customRender: (text, row, index) => {
           if (text !== null) {
-            return '￥' + text
+            return '￥' + text.toFixed(2)
           } else {
             return '- -'
           }
         }
       }, {
-        title: '涨幅时间',
+        title: '状态',
+        dataIndex: 'status',
+        customRender: (text, row, index) => {
+          switch (text) {
+            case 1:
+              return <a-tag color="red">等待审核</a-tag>
+            case 2:
+              return <a-tag color="green">已入库</a-tag>
+            default:
+              return '- -'
+          }
+        }
+      }, {
+        title: '供应商',
+        dataIndex: 'supplierName',
+        customRender: (text, row, index) => {
+          if (text !== null) {
+            return text
+          } else {
+            return '- -'
+          }
+        }
+      }, {
+        title: '保管人',
+        dataIndex: 'custodianName',
+        customRender: (text, row, index) => {
+          if (text !== null) {
+            return text
+          } else {
+            return '- -'
+          }
+        }
+      }, {
+        title: '经手人',
+        dataIndex: 'handlerName',
+        customRender: (text, row, index) => {
+          if (text !== null) {
+            return text
+          } else {
+            return '- -'
+          }
+        }
+      }, {
+        title: '备注',
+        dataIndex: 'remark',
+        scopedSlots: {customRender: 'contentShow'}
+      }, {
+        title: '入库时间',
         dataIndex: 'createDate',
         customRender: (text, row, index) => {
           if (text !== null) {
@@ -232,41 +223,56 @@ export default {
     this.fetch()
   },
   methods: {
+    downLoad (row) {
+      this.$message.loading('正在生成', 0)
+      this.$get(`/cos/storage-record/export/${row.code}`).then((r) => {
+        let materialList = r.data.materialMapList
+        let newData = []
+        materialList.forEach((item, index) => {
+          newData.push([(index + 1).toFixed(0), item.materialName, item.measurementUnit !== null ? item.measurementUnit : '- -', item.quantity, item.unitPrice])
+        })
+        let spread = newSpread('inTable')
+        let sheet = spread.getActiveSheet()
+        sheet.suspendPaint()
+        sheet.setValue(2, 12, row.code)
+        spread = floatForm(spread, 'inTable', newData)
+        saveExcel(spread, '入库单.xlsx')
+        floatReset(spread, 'inTable', newData.length)
+        this.$message.destroy()
+      })
+    },
+    audit (row) {
+      this.recordView.data = row
+      this.recordView.visiable = true
+    },
+    view (row) {
+      this.recordView.data = row
+      this.recordView.visiable = true
+    },
+    handlerecordViewClose () {
+      this.recordView.visiable = false
+    },
+    handlerecordSuccess () {
+      this.recordView.visiable = false
+      this.$message.success('入库成功')
+      this.search()
+    },
     onSelectChange (selectedRowKeys) {
       this.selectedRowKeys = selectedRowKeys
     },
     toggleAdvanced () {
       this.advanced = !this.advanced
     },
-    view (record) {
-      this.salaryGainView.visiable = true
-      this.salaryGainView.data = record
-    },
     add () {
-      this.salaryGainAdd.visiable = true
+      this.requestAdd.visiable = true
     },
-    handlesalaryGainAddClose () {
-      this.salaryGainAdd.visiable = false
+    handleRequestAddClose () {
+      this.requestAdd.visiable = false
     },
-    handlesalaryGainAddSuccess () {
-      this.salaryGainAdd.visiable = false
-      this.$message.success('更新薪资成功')
+    handleRequestAddSuccess () {
+      this.requestAdd.visiable = false
+      this.$message.success('入库成功')
       this.search()
-    },
-    edit (record) {
-      this.$refs.salaryGainEdit.setFormValues(record)
-      this.salaryGainEdit.visiable = true
-    },
-    handlesalaryGainEditClose () {
-      this.salaryGainEdit.visiable = false
-    },
-    handlesalaryGainEditSuccess () {
-      this.salaryGainEdit.visiable = false
-      this.$message.success('修改薪资成功')
-      this.search()
-    },
-    handlesalaryGainViewClose () {
-      this.salaryGainView.visiable = false
     },
     handleDeptChange (value) {
       this.queryParams.deptId = value || ''
@@ -283,7 +289,7 @@ export default {
         centered: true,
         onOk () {
           let ids = that.selectedRowKeys.join(',')
-          that.$delete('/cos/salary-gain/' + ids).then(() => {
+          that.$delete('/cos/storage-record/' + ids).then(() => {
             that.$message.success('删除成功')
             that.selectedRowKeys = []
             that.search()
@@ -353,10 +359,7 @@ export default {
         params.size = this.pagination.defaultPageSize
         params.current = this.pagination.defaultCurrent
       }
-      if (params.staffType === undefined) {
-        delete params.staffType
-      }
-      this.$get('/cos/salary-gain/page', {
+      this.$get('/cos/storage-record/page', {
         ...params
       }).then((r) => {
         let data = r.data.data

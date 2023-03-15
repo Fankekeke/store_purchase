@@ -68,6 +68,17 @@ public class StorageRecordController {
     }
 
     /**
+     * 入库审核
+     *
+     * @param code 入库单号
+     * @return 结果
+     */
+    @GetMapping("/storePutAudit/{code}")
+    public R storePutAudit(@PathVariable("code") String code) {
+        return R.ok(storageRecordService.storePutAudit(code));
+    }
+
+    /**
      * 修改入库记录
      *
      * @param storageRecord 入库记录

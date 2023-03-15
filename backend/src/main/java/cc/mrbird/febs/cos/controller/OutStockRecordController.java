@@ -67,6 +67,17 @@ public class OutStockRecordController {
     }
 
     /**
+     * 出库审核
+     *
+     * @param code 出库单号
+     * @return 结果
+     */
+    @GetMapping("/storeOutAudit/{code}")
+    public R storeOutAudit(@PathVariable("code") String code) {
+        return R.ok(outStockRecordService.storeOutAudit(code));
+    }
+
+    /**
      * 编辑物料出库信息
      *
      * @param outStockRecord 出库记录

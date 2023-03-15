@@ -1,6 +1,9 @@
 <template>
-  <a-modal v-model="show" title="订单详情" @cancel="onClose" :width="900">
+  <a-modal v-model="show" title="出库详情" @cancel="onClose" :width="900">
     <template slot="footer">
+      <a-button key="back" @click="audit" v-if="recordData != null && recordData.status == 1">
+        出库
+      </a-button>
       <a-button key="back" @click="onClose" type="danger">
         关闭
       </a-button>
@@ -131,6 +134,11 @@ export default {
     }
   },
   methods: {
+    audit () {
+      this.$get(`/cos/out-stock-record/storeOutAudit/${this.recordData.code}`).then((r) => {
+        this.$emit('success')
+      })
+    },
     getGoodsByNum (num) {
       this.$get(`/cos/out-stock-record/${num}`).then((r) => {
         this.goodsList = r.data.data

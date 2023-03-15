@@ -11,6 +11,7 @@
         oi.total_price AS totalPrice ,
         oi.handler_code AS handlerCode,
         oi.create_time AS createTime,
+        oi.status,
         si.staff_name AS handlerName,
         si.avatar AS handlerAvatar
         FROM order_info oi

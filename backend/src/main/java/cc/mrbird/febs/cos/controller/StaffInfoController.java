@@ -2,9 +2,7 @@ package cc.mrbird.febs.cos.controller;
 
 
 import cc.mrbird.febs.common.utils.R;
-import cc.mrbird.febs.cos.entity.SalaryGain;
 import cc.mrbird.febs.cos.entity.StaffInfo;
-import cc.mrbird.febs.cos.service.ISalaryGainService;
 import cc.mrbird.febs.cos.service.IStaffInfoService;
 import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -25,8 +23,6 @@ import java.util.List;
 public class StaffInfoController {
 
     private final IStaffInfoService staffInfoService;
-
-    private final ISalaryGainService salaryGainService;
 
     /**
      * 分页查询员工信息
@@ -63,14 +59,6 @@ public class StaffInfoController {
         staffInfo.setStaffCode("STAFF-" + System.currentTimeMillis());
         staffInfo.setOnBoardTime(DateUtil.formatDate(new Date()));
         staffInfo.setStaffStatus(1);
-
-        SalaryGain salaryGain = new SalaryGain();
-        salaryGain.setStaffCode(staffInfo.getStaffCode());
-        salaryGain.setType(0);
-        salaryGain.setSalary(staffInfo.getSalary());
-        salaryGain.setCurrentFlag(1);
-        salaryGain.setCreateDate(DateUtil.formatDate(new Date()));
-        salaryGainService.save(salaryGain);
         return R.ok(staffInfoService.save(staffInfo));
     }
 

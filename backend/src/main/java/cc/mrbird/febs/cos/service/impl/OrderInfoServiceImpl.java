@@ -1,17 +1,14 @@
 package cc.mrbird.febs.cos.service.impl;
 
 import cc.mrbird.febs.common.exception.FebsException;
-import cc.mrbird.febs.cos.dao.SalaryRecordsMapper;
 import cc.mrbird.febs.cos.dao.StorageRecordMapper;
 import cc.mrbird.febs.cos.entity.OrderInfo;
 import cc.mrbird.febs.cos.dao.OrderInfoMapper;
-import cc.mrbird.febs.cos.entity.SalaryRecords;
 import cc.mrbird.febs.cos.entity.StorageRecord;
 import cc.mrbird.febs.cos.entity.StorehouseInfo;
 import cc.mrbird.febs.cos.service.IOrderInfoService;
 import cc.mrbird.febs.cos.service.IStorehouseInfoService;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.convert.Convert;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -36,8 +33,6 @@ import java.util.stream.Collectors;
 public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> implements IOrderInfoService {
 
     private final IStorehouseInfoService storehouseInfoService;
-
-    private final SalaryRecordsMapper salaryRecordsMapper;
 
     private final StorageRecordMapper storageRecordMapper;
 
@@ -89,6 +84,8 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     @Override
     @Transactional(rollbackFor = {Exception.class})
     public boolean saveOrder(OrderInfo orderInfo) {
+        // 设置出库状态
+        orderInfo.setStatus("1");
         // 添加订单编号
         orderInfo.setCode("ORDER-" + System.currentTimeMillis());
         orderInfo.setCreateTime(DateUtil.formatDateTime(new Date()));
@@ -96,10 +93,47 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         BigDecimal totalPrice = infoList.stream().map(p -> p.getQuantity().multiply(p.getUnitPrice())).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         orderInfo.setTotalPrice(totalPrice);
         // 设置出库编号
-        infoList.forEach(e -> e.setDeliveryOrderNumber(orderInfo.getCode()));
+        infoList.forEach(e -> {
+            e.setDeliveryOrderNumber(orderInfo.getCode());
+            e.setCreateDate(DateUtil.formatDateTime(new Date()));
+            e.setStatus("1");
+        });
         storehouseInfoService.saveBatch(infoList);
         // 添加订单信息
         return this.save(orderInfo);
+    }
+
+    /**
+     * 出库审核
+     *
+     * @param code 出库单号
+     * @return 结果
+     */
+    @Override
+    public boolean storeOutAudit(String code) {
+        // 根据单号获取物品信息
+        List<StorehouseInfo> infoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().eq(StorehouseInfo::getDeliveryOrderNumber, code));
+
+        // 获取物料库存
+        List<String> materialNameList = infoList.stream().map(StorehouseInfo::getMaterialName).distinct().collect(Collectors.toList());
+        List<StorehouseInfo> storehouseInfoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().in(StorehouseInfo::getMaterialName, materialNameList).eq(StorehouseInfo::getTransactionType, 0));
+        // 库存信息转MAP
+        Map<String, StorehouseInfo> storehouseInfoMap = storehouseInfoList.stream().collect(Collectors.toMap(StorehouseInfo::getMaterialName, e -> e));
+        List<StorehouseInfo> inStockList = new ArrayList<>();
+        infoList.forEach(material -> {
+            // 库房类型
+            material.setTransactionType(2);
+            material.setStatus("2");
+            StorehouseInfo stockItem = storehouseInfoMap.get(material.getMaterialName());
+            if (stockItem != null) {
+                stockItem.setQuantity(stockItem.getQuantity().subtract(material.getQuantity()));
+                material.setStatus(null);
+                inStockList.add(stockItem);
+            }
+        });
+        storehouseInfoService.updateBatchById(inStockList);
+        storehouseInfoService.updateBatchById(infoList);
+        return this.update(Wrappers.<OrderInfo>lambdaUpdate().set(OrderInfo::getStatus, 2).eq(OrderInfo::getCode, code));
     }
 
     /**
@@ -126,15 +160,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         List<OrderInfo> orderInfoList = baseMapper.selectOrderInfoByDate(year, month);
         // 支出【采收入库+员工薪资】
         List<StorageRecord> storageRecordList = storageRecordMapper.selectStorageRecordByDate(year, month);
-        List<SalaryRecords> salaryRecordsList = salaryRecordsMapper.selectList(Wrappers.<SalaryRecords>lambdaQuery().eq(SalaryRecords::getYear, year).eq(StrUtil.isNotEmpty(month), SalaryRecords::getMonth, month));
         return new LinkedHashMap<String, Object>() {
             {
                 put("orderTotal", orderInfoList.size());
                 put("orderTotalPrice", orderInfoList.stream().map(OrderInfo::getTotalPrice).reduce(BigDecimal.ZERO,BigDecimal::add));
                 put("inTotal", storageRecordList.size());
                 put("inTotalPrice", storageRecordList.stream().map(StorageRecord::getTotalPrice).reduce(BigDecimal.ZERO,BigDecimal::add));
-                put("salaryTotal", salaryRecordsList.size());
-                put("salaryTotalPrice", salaryRecordsList.stream().map(SalaryRecords::getPayroll).reduce(BigDecimal.ZERO,BigDecimal::add));
             }
         };
     }

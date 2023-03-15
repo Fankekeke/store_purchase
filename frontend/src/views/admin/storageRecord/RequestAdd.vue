@@ -1,6 +1,6 @@
 <template>
   <a-drawer
-    title="出库"
+    title="耗材入库"
     :maskClosable="false"
     placement="right"
     :closable="false"
@@ -9,9 +9,9 @@
     @close="onClose"
     style="height: calc(100% - 55px);overflow: auto;padding-bottom: 53px;"
   >
-    <a-form :form="form" layout="vertical">
-      <a-row :gutter="20">
-        <a-col :span="12">
+    <a-form :form="form" layout="horizontal">
+      <a-row :gutter="50">
+        <a-col :span="8">
           <a-form-item label='保管人' v-bind="formItemLayout">
             <a-select style="width: 100%" v-model="custodian" option-label-prop="label">
               <a-select-option v-for="(item, index) in staffList" :key="index" :value="item.staffCode" :label="item.staffName">
@@ -36,7 +36,7 @@
             </a-select>
           </a-form-item>
         </a-col>
-        <a-col :span="12">
+        <a-col :span="8">
           <a-form-item label='经手人' v-bind="formItemLayout">
             <a-select style="width: 100%" v-model="handler" option-label-prop="label">
               <a-select-option v-for="(item, index) in staffList" :key="index" :value="item.staffCode" :label="item.staffName">
@@ -61,6 +61,15 @@
             </a-select>
           </a-form-item>
         </a-col>
+        <a-col :span="8">
+          <a-form-item label='供应商' v-bind="formItemLayout">
+            <a-select style="width: 100%" v-decorator="['supplierId', { rules: [{ required: true, message: '请选择供应商!' }] }]">
+              <a-select-option v-for="opt in supplierList" :key="opt.id" :value="opt.id">
+                {{ opt.supplierName }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
         <a-col :span="24">
           <a-form-item label='备注消息' v-bind="formItemLayout">
             <a-textarea :rows="4" v-decorator="[
@@ -72,7 +81,20 @@
         <a-col :span="24">
           <a-table :columns="columns" :data-source="dataList">
             <template slot="nameShow" slot-scope="text, record">
-              <a-input v-model="record.materialName"></a-input>
+              <a-auto-complete
+                v-model="record.materialName"
+                option-label-prop="value"
+                style="width: 200px"
+                @search="onSearch"
+                @change="handleChange(record.materialName, record)">
+                <template slot="dataSource">
+                  <a-select-option v-for="opt in materialList" :key="opt.id" :value="opt.materialName">
+                    {{ opt.materialName }}
+                    <span class="certain-search-item-count">{{ opt.model }}</span>
+                  </a-select-option>
+                </template>
+              </a-auto-complete>
+<!--              <a-input v-model="record.materialName"></a-input>-->
             </template>
             <template slot="typeShow" slot-scope="text, record">
               <a-input v-model="record.model"></a-input>
@@ -86,15 +108,15 @@
               <a-input v-model="record.measurementUnit"></a-input>
             </template>
             <template slot="amountShow" slot-scope="text, record">
-              <a-input-number v-model="record.quantity" :min="1" :max="record.quantity !== undefined ? record.quantity : 999999" :step="1"/>
+              <a-input-number v-model="record.quantity" :min="1" :step="1"/>
             </template>
             <template slot="priceShow" slot-scope="text, record">
               <a-input-number v-model="record.unitPrice" :min="1"/>
             </template>
           </a-table>
-<!--          <a-button @click="dataAdd" type="primary" ghost size="large" style="margin-top: 10px;width: 100%">-->
-<!--            新增物品-->
-<!--          </a-button>-->
+          <a-button @click="dataAdd" type="primary" ghost size="large" style="margin-top: 10px;width: 100%">
+            新增物品
+          </a-button>
         </a-col>
       </a-row>
     </a-form>
@@ -114,13 +136,10 @@ const formItemLayout = {
   wrapperCol: { span: 24 }
 }
 export default {
-  name: 'StockOut',
+  name: 'requestAdd',
   props: {
-    stockoutVisiable: {
+    requestAddVisiable: {
       default: false
-    },
-    stockoutData: {
-      type: Array
     }
   },
   computed: {
@@ -129,7 +148,7 @@ export default {
     }),
     show: {
       get: function () {
-        return this.stockoutVisiable
+        return this.requestAddVisiable
       },
       set: function () {
       }
@@ -163,29 +182,24 @@ export default {
       }]
     }
   },
+  mounted () {
+    this.getStaffList()
+    this.getSupplierList()
+    this.selectProductType()
+  },
   data () {
     return {
+      dataList: [],
       formItemLayout,
       form: this.$form.createForm(this),
       loading: false,
-      dataList: [],
       staffList: [],
       handler: null,
       custodian: null,
       materialList: [],
+      supplierList: [],
       productTypeList: []
     }
-  },
-  watch: {
-    stockoutVisiable: function (value) {
-      if (value) {
-        this.dataList = this.stockoutData
-      }
-    }
-  },
-  mounted () {
-    this.getStaffList()
-    this.selectProductType()
   },
   methods: {
     selectProductType () {
@@ -193,14 +207,39 @@ export default {
         this.productTypeList = r.data.data
       })
     },
+    getSupplierList () {
+      this.$get('/cos/supplier-info/list/-1').then((r) => {
+        this.supplierList = r.data.data
+      })
+    },
+    onSearch (searchText) {
+      this.selectMaterialFuzzy(searchText)
+    },
+    handleChange (value, row) {
+      this.materialList.forEach(item => {
+        if (item.materialName === value) {
+          row.materialType = item.materialType.toString()
+          row.model = item.model
+          row.measurementUnit = item.measurementUnit
+          row.unitPrice = item.unitPrice
+        }
+      })
+    },
     getStaffList () {
       this.$get('/cos/staff-info/list').then((r) => {
         this.staffList = r.data.data
       })
     },
+    selectMaterialFuzzy (materialName) {
+      this.$get(`/cos/storehouse-info/remote/${materialName}`).then((r) => {
+        this.materialList = r.data.data
+      })
+    },
+    dataAdd () {
+      this.dataList.push({materialName: [], materialType: '', measurementUnit: '', quantity: 1, unitPrice: '', model: ''})
+    },
     reset () {
       this.loading = false
-      this.dataList = []
       this.form.resetFields()
     },
     onClose () {
@@ -209,15 +248,16 @@ export default {
     },
     handleSubmit () {
       if (this.handler == null || this.custodian == null || this.dataList.length === 0) {
-        this.$message.error('请添加出库记录！')
+        this.$message.error('请正确填写！')
+        return false
       }
       this.form.validateFields((err, values) => {
+        values.material = JSON.stringify(this.dataList)
+        values.handlerCode = this.handler
+        values.custodianCode = this.custodian
         if (!err) {
-          values.material = JSON.stringify(this.dataList)
-          values.handlerCode = this.handler
-          values.custodianCode = this.custodian
           this.loading = true
-          this.$post('/cos/out-stock-record', {
+          this.$post('/cos/storage-record', {
             ...values
           }).then((r) => {
             this.reset()

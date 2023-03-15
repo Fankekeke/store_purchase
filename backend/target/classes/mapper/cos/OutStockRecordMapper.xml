@@ -2,13 +2,14 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cc.mrbird.febs.cos.dao.OutStockRecordMapper">
 
-    <!-- 分页查询出库记录 -->
+    <!-- 分页查询出库记录1 -->
     <select id="selectOutStockRecordPage" resultType="java.util.LinkedHashMap">
         SELECT osr.id,
         osr.code,
         osr.handler_code AS handlerCode,
         osr.custodian_code AS custodianCode,
         osr.create_date AS createDate,
+        osr.total_price AS totalPrice,
         osr.status,
         osr.remark,
         si1.staff_name AS handlerName,

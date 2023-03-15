@@ -47,6 +47,14 @@ public interface IOutStockRecordService extends IService<OutStockRecord> {
     boolean saveOutStock(OutStockRecord outStockRecord);
 
     /**
+     * 出库审核
+     *
+     * @param code 出库单号
+     * @return 结果
+     */
+    boolean storeOutAudit(String code);
+
+    /**
      * 七天内出库统计
      *
      * @param materialType 物料类型

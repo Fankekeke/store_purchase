@@ -1,5 +1,6 @@
 package cc.mrbird.febs.cos.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.io.Serializable;
 
@@ -57,6 +58,8 @@ public class OutStockRecord implements Serializable {
      * 状态（1.已创建 2.已出库）
      */
     private String status;
+
+    private BigDecimal totalPrice;
 
     /**
      * 物料信息

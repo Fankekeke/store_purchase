@@ -91,16 +91,12 @@ public class StorageRecordServiceImpl extends ServiceImpl<StorageRecordMapper, S
      */
     @Override
     public boolean saveStorageRecord(StorageRecord storageRecord) {
+        // 设置入库状态
+        storageRecord.setStatus("1");
         // 设置入库单号
         storageRecord.setCode("IN-"+System.currentTimeMillis());
         List<StorehouseInfo> infoList = JSONUtil.toList(storageRecord.getMaterial(), StorehouseInfo.class);
-        // 获取物料库存
-        List<String> materialNameList = infoList.stream().map(StorehouseInfo::getMaterialName).distinct().collect(Collectors.toList());
-        List<StorehouseInfo> storehouseInfoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().in(StorehouseInfo::getMaterialName, materialNameList).eq(StorehouseInfo::getTransactionType, 0));
-        // 库存信息转MAP
-        Map<String, StorehouseInfo> storehouseInfoMap = storehouseInfoList.stream().collect(Collectors.toMap(StorehouseInfo::getMaterialName, e -> e));
-        List<StorehouseInfo> inStockList = new ArrayList<>();
-        List<StorehouseInfo> putStockList = new ArrayList<>();
+
         storageRecord.setCreateDate(DateUtil.formatDateTime(new Date()));
         // 总价格
         BigDecimal totalPrice = infoList.stream().map(p -> p.getQuantity().multiply(p.getUnitPrice())).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
@@ -108,10 +104,41 @@ public class StorageRecordServiceImpl extends ServiceImpl<StorageRecordMapper, S
         infoList.forEach(material -> {
             // 入库单号
             material.setInboundOrderNumber(storageRecord.getCode());
-            StorehouseInfo stockItem = storehouseInfoMap.get(material.getMaterialName());
             // 库房类型
             material.setTransactionType(1);
+            material.setStatus("1");
             material.setCreateDate(DateUtil.formatDateTime(new Date()));
+        });
+        storehouseInfoService.saveBatch(infoList);
+        return this.save(storageRecord);
+    }
+
+    /**
+     * 入库审核
+     *
+     * @param code 入库单号
+     * @return 结果
+     */
+    @Override
+    public boolean storePutAudit(String code) {
+        // 根据入库单号获取入库物品信息
+        List<StorehouseInfo> infoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaUpdate().eq(StorehouseInfo::getInboundOrderNumber, code));
+
+        List<String> materialNameList = infoList.stream().map(StorehouseInfo::getMaterialName).distinct().collect(Collectors.toList());
+        List<StorehouseInfo> storehouseInfoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().in(StorehouseInfo::getMaterialName, materialNameList).eq(StorehouseInfo::getTransactionType, 0));
+        // 库存信息转MAP
+        Map<String, StorehouseInfo> storehouseInfoMap = storehouseInfoList.stream().collect(Collectors.toMap(StorehouseInfo::getMaterialName, e -> e));
+
+        // 需要更新的库存信息
+        List<StorehouseInfo> inStockList = new ArrayList<>();
+        List<StorehouseInfo> putStockList = new ArrayList<>();
+        // 更新库房库存
+        infoList.forEach(material -> {
+            // 库存状态更改
+            material.setStatus("2");
+            // 此物品的库存信息
+            StorehouseInfo stockItem = storehouseInfoMap.get(material.getMaterialName());
+
             if (stockItem != null) {
                 stockItem.setQuantity(stockItem.getQuantity().add(material.getQuantity()));
                 stockItem.setCreateDate(DateUtil.formatDateTime(new Date()));
@@ -120,6 +147,7 @@ public class StorageRecordServiceImpl extends ServiceImpl<StorageRecordMapper, S
                 stockItem = BeanUtil.copyProperties(material, StorehouseInfo.class);
                 stockItem.setInboundOrderNumber(null);
                 stockItem.setTransactionType(0);
+                stockItem.setStatus(null);
                 putStockList.add(stockItem);
             }
         });
@@ -127,10 +155,12 @@ public class StorageRecordServiceImpl extends ServiceImpl<StorageRecordMapper, S
             storehouseInfoService.updateBatchById(inStockList);
         }
         if (CollectionUtil.isNotEmpty(putStockList)) {
-            infoList.addAll(putStockList);
+            storehouseInfoService.saveBatch(putStockList);
         }
-        storehouseInfoService.saveBatch(infoList);
-        return this.save(storageRecord);
+        storehouseInfoService.updateBatchById(infoList);
+
+        // 修改入库单号状态
+        return this.update(Wrappers.<StorageRecord>lambdaUpdate().set(StorageRecord::getStatus, 2).eq(StorageRecord::getCode, code));
     }
 
     /**

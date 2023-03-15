@@ -7,14 +7,6 @@
           <div :class="advanced ? null: 'fold'">
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="入库单号"
-                :labelCol="{span: 4}"
-                :wrapperCol="{span: 18, offset: 2}">
-                <a-input v-model="queryParams.code"/>
-              </a-form-item>
-            </a-col>
-            <a-col :md="6" :sm="24">
-              <a-form-item
                 label="保管人"
                 :labelCol="{span: 4}"
                 :wrapperCol="{span: 18, offset: 2}">
@@ -39,7 +31,6 @@
     </div>
     <div>
       <div class="operator">
-        <a-button type="primary" ghost @click="add">入库</a-button>
         <a-button @click="batchDelete">删除</a-button>
       </div>
       <!-- 表格区域 -->
@@ -75,15 +66,8 @@
         </template>
         <template slot="operation" slot-scope="text, record">
           <a-icon type="folder-open" @click="view(record)" title="查 看" style="margin-right: 15px"></a-icon>
-          <a-icon type="download" @click="downLoad(record)" title="下 载"></a-icon>
         </template>
       </a-table>
-      <request-add
-        v-if="requestAdd.visiable"
-        @close="handleRequestAddClose"
-        @success="handleRequestAddSuccess"
-        :requestAddVisiable="requestAdd.visiable">
-      </request-add>
       <record-view
         @close="handlerecordViewClose"
         :recordShow="recordView.visiable"
@@ -99,12 +83,11 @@ import RecordView from './RecordView'
 import {mapState} from 'vuex'
 import { newSpread, floatForm, floatReset, saveExcel } from '@/utils/spreadJS'
 import moment from 'moment'
-import RequestAdd from './RequestAdd'
 moment.locale('zh-cn')
 
 export default {
   name: 'request',
-  components: {RequestAdd, RecordView, RangeDate},
+  components: {RecordView, RangeDate},
   data () {
     return {
       advanced: false,
@@ -152,19 +135,6 @@ export default {
             return '￥' + text.toFixed(2)
           } else {
             return '- -'
-          }
-        }
-      }, {
-        title: '状态',
-        dataIndex: 'status',
-        customRender: (text, row, index) => {
-          switch (text) {
-            case 1:
-              return <a-tag color="red">等待审核</a-tag>
-            case 2:
-              return <a-tag color="green">已入库</a-tag>
-            default:
-              return '- -'
           }
         }
       }, {
@@ -261,7 +231,7 @@ export default {
     },
     handleRequestAddSuccess () {
       this.requestAdd.visiable = false
-      this.$message.success('添加成功')
+      this.$message.success('入库成功')
       this.search()
     },
     handleDeptChange (value) {
@@ -349,6 +319,7 @@ export default {
         params.size = this.pagination.defaultPageSize
         params.current = this.pagination.defaultCurrent
       }
+      params.status = '3'
       this.$get('/cos/storage-record/page', {
         ...params
       }).then((r) => {

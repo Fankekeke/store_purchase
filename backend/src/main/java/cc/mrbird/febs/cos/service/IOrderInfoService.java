@@ -41,6 +41,14 @@ public interface IOrderInfoService extends IService<OrderInfo> {
     boolean saveOrder(OrderInfo orderInfo);
 
     /**
+     * 出库审核
+     *
+     * @param code 出库单号
+     * @return 结果
+     */
+    boolean storeOutAudit(String code);
+
+    /**
      * 查询订单详情
      *
      * @param code 订单编号

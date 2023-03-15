@@ -76,6 +76,17 @@ public class OrderInfoController {
     }
 
     /**
+     * 出库审核
+     *
+     * @param code 出库单号
+     * @return 结果
+     */
+    @GetMapping("/storeOutAudit/{code}")
+    public R storeOutAudit(@PathVariable("code") String code) {
+        return R.ok(orderInfoService.storeOutAudit(code));
+    }
+
+    /**
      * 修改订单信息
      *
      * @param orderInfo 订单信息
