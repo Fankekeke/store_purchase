@@ -73,6 +73,79 @@ public class StorageRecordServiceImpl extends ServiceImpl<StorageRecordMapper, S
     }
 
     /**
+     * 查询退货对比信息
+     *
+     * @param code 入库单号
+     * @return 结果
+     */
+    @Override
+    public LinkedHashMap<String, Object> selectReturnedPurchase(String code) {
+        if (StrUtil.isEmpty(code)) {
+            return null;
+        }
+        List<StorehouseInfo> goodsList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().eq(StorehouseInfo::getInboundOrderNumber, code));
+        // 获取物品库存信息
+        List<String> materialNameList = goodsList.stream().map(StorehouseInfo::getMaterialName).distinct().collect(Collectors.toList());
+        List<StorehouseInfo> storehouseInfoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().in(StorehouseInfo::getMaterialName, materialNameList).eq(StorehouseInfo::getTransactionType, 0));
+        // 库存信息转MAP
+        Map<String, StorehouseInfo> storehouseInfoMap = storehouseInfoList.stream().collect(Collectors.toMap(StorehouseInfo::getMaterialName, e -> e));
+
+        LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+        goodsList.forEach(e -> {
+            StorehouseInfo storeItem = storehouseInfoMap.get(e.getMaterialName());
+            if (storeItem != null) {
+                e.setStoreMax(storeItem.getQuantity());
+            } else {
+                e.setStoreMax(BigDecimal.ZERO);
+            }
+        });
+        result.put("gooods", goodsList);
+        result.put("status", goodsList.stream().noneMatch(e -> e.getQuantity().compareTo(e.getStoreMax()) < 0));
+        return result;
+    }
+
+    /**
+     * 退货操作
+     *
+     * @param code 入库单号
+     * @return 结果
+     */
+    @Override
+    public boolean returnedPurchase(String code) {
+        if (StrUtil.isEmpty(code)) {
+            return false;
+        }
+        StorageRecord storageRecord = this.getOne(Wrappers.<StorageRecord>lambdaQuery().eq(StorageRecord::getCode, code));
+        // 入库物品
+        List<StorehouseInfo> goodsList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().eq(StorehouseInfo::getInboundOrderNumber, code));
+
+        List<String> materialNameList = goodsList.stream().map(StorehouseInfo::getMaterialName).distinct().collect(Collectors.toList());
+        List<StorehouseInfo> storehouseInfoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().in(StorehouseInfo::getMaterialName, materialNameList).eq(StorehouseInfo::getTransactionType, 0));
+        // 库存信息转MAP
+        Map<String, StorehouseInfo> storehouseInfoMap = storehouseInfoList.stream().collect(Collectors.toMap(StorehouseInfo::getMaterialName, e -> e));
+
+        // 需要更新的库存信息
+        List<StorehouseInfo> inStockList = new ArrayList<>();
+        // 更新库房库存
+        goodsList.forEach(material -> {
+            // 库存状态更改
+            material.setStatus("3");
+            // 此物品的库存信息
+            StorehouseInfo stockItem = storehouseInfoMap.get(material.getMaterialName());
+
+            if (stockItem != null) {
+                stockItem.setQuantity(stockItem.getQuantity().subtract(material.getQuantity()));
+                stockItem.setCreateDate(DateUtil.formatDateTime(new Date()));
+                inStockList.add(stockItem);
+            }
+        });
+        storehouseInfoService.updateBatchById(goodsList);
+        storehouseInfoService.updateBatchById(inStockList);
+        storageRecord.setStatus("3");
+        return this.updateById(storageRecord);
+    }
+
+    /**
      * 入库记录详情
      *
      * @param code 入库单号

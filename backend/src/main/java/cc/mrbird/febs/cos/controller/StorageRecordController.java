@@ -5,6 +5,7 @@ import cc.mrbird.febs.common.utils.R;
 import cc.mrbird.febs.cos.entity.StorageRecord;
 import cc.mrbird.febs.cos.service.IStorageRecordService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.sun.org.apache.regexp.internal.RE;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +44,28 @@ public class StorageRecordController {
     @GetMapping("/export/{code}")
     public R export(@PathVariable("code") String code) throws Exception {
         return R.ok(storageRecordService.export(code));
+    }
+
+    /**
+     * 查询退货对比信息
+     *
+     * @param code 入库单号
+     * @return 结果
+     */
+    @GetMapping("/returned/purchase/{code}")
+    public R selectReturnedPurchase(@PathVariable("code") String code) {
+        return R.ok(storageRecordService.selectReturnedPurchase(code));
+    }
+
+    /**
+     * 退货操作
+     *
+     * @param code 入库单号
+     * @return 结果
+     */
+    @GetMapping("/returned/{code}")
+    public R returnedPurchase(@PathVariable("code") String code) {
+        return R.ok(storageRecordService.returnedPurchase(code));
     }
 
     /**

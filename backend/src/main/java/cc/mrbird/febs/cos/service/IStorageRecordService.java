@@ -33,6 +33,22 @@ public interface IStorageRecordService extends IService<StorageRecord> {
     LinkedHashMap<String, Object> export(String code) throws Exception;
 
     /**
+     * 查询退货对比信息
+     *
+     * @param code 入库单号
+     * @return 结果
+     */
+    LinkedHashMap<String, Object> selectReturnedPurchase(String code);
+
+    /**
+     * 退货操作
+     *
+     * @param code 入库单号
+     * @return 结果
+     */
+    boolean returnedPurchase(String code);
+
+    /**
      * 入库记录详情
      *
      * @param code 入库单号
