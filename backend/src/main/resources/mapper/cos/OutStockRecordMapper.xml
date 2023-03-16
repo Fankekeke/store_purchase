@@ -53,6 +53,20 @@
         ORDER BY si.create_date DESC
     </select>
 
+    <!-- 根据年份月度查询出库信息 -->
+    <select id="selectOrderInfoByDate" resultType="cc.mrbird.febs.cos.entity.OutStockRecord">
+        SELECT osr.*
+        FROM out_stock_record osr
+        WHERE 1 = 1
+        <if test="month != null and month != ''">
+            AND YEAR(osr.create_date) = #{year}
+            AND MONTH(osr.create_date) = #{month}
+        </if>
+        <if test="month == null">
+            AND YEAR(osr.create_date) = #{year}
+        </if>
+    </select>
+
     <!-- 七天内出库统计 -->
     <select id="selectLastSevenDaysOutCount" resultType="java.util.LinkedHashMap">
         SELECT

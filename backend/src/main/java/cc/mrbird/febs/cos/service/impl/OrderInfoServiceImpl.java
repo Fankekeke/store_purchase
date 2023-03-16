@@ -1,12 +1,13 @@
 package cc.mrbird.febs.cos.service.impl;
 
 import cc.mrbird.febs.common.exception.FebsException;
+import cc.mrbird.febs.cos.dao.OutStockRecordMapper;
 import cc.mrbird.febs.cos.dao.StorageRecordMapper;
-import cc.mrbird.febs.cos.entity.OrderInfo;
+import cc.mrbird.febs.cos.entity.*;
 import cc.mrbird.febs.cos.dao.OrderInfoMapper;
-import cc.mrbird.febs.cos.entity.StorageRecord;
-import cc.mrbird.febs.cos.entity.StorehouseInfo;
 import cc.mrbird.febs.cos.service.IOrderInfoService;
+import cc.mrbird.febs.cos.service.IOutStockRecordService;
+import cc.mrbird.febs.cos.service.IProductTypeInfoService;
 import cc.mrbird.febs.cos.service.IStorehouseInfoService;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
@@ -35,6 +36,10 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     private final IStorehouseInfoService storehouseInfoService;
 
     private final StorageRecordMapper storageRecordMapper;
+
+    private final OutStockRecordMapper outStockRecordMapper;
+
+    private final IProductTypeInfoService productTypeInfoService;
 
     /**
      * 分页查询订单信息
@@ -157,15 +162,15 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     @Override
     public LinkedHashMap<String, Object> selectStatisticsByMonth(String year, String month) {
         // 收入 【订单结余】
-        List<OrderInfo> orderInfoList = baseMapper.selectOrderInfoByDate(year, month);
-        // 支出【采收入库+员工薪资】
+        List<OutStockRecord> outStockRecordList = outStockRecordMapper.selectOrderInfoByDate(year, month);
+        // 支出【采收入库】
         List<StorageRecord> storageRecordList = storageRecordMapper.selectStorageRecordByDate(year, month);
         return new LinkedHashMap<String, Object>() {
             {
-                put("orderTotal", orderInfoList.size());
-                put("orderTotalPrice", orderInfoList.stream().map(OrderInfo::getTotalPrice).reduce(BigDecimal.ZERO,BigDecimal::add));
+                put("orderTotal", outStockRecordList.size());
+                put("orderTotalPrice", outStockRecordList.stream().map(OutStockRecord::getTotalPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
                 put("inTotal", storageRecordList.size());
-                put("inTotalPrice", storageRecordList.stream().map(StorageRecord::getTotalPrice).reduce(BigDecimal.ZERO,BigDecimal::add));
+                put("inTotalPrice", storageRecordList.stream().map(StorageRecord::getTotalPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
             }
         };
     }
@@ -180,9 +185,9 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     @Override
     public LinkedHashMap<String, Object> selectMaterialTypeRate(String year, String month) {
         // 获取订单信息
-        List<OrderInfo> orderInfoList = baseMapper.selectOrderInfoByDate(year, month);
+        List<OutStockRecord> orderInfoList = outStockRecordMapper.selectOrderInfoByDate(year, month);
         // 获取订单详情
-        List<String> orderNumberList = orderInfoList.stream().map(OrderInfo::getCode).collect(Collectors.toList());
+        List<String> orderNumberList = orderInfoList.stream().map(OutStockRecord::getCode).collect(Collectors.toList());
         List<StorehouseInfo> storehouseInfoList = new ArrayList<>();
         if (CollectionUtil.isNotEmpty(orderNumberList)) {
             storehouseInfoList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().in(StorehouseInfo::getDeliveryOrderNumber, orderNumberList));
@@ -195,10 +200,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
         Map<Integer, List<StorehouseInfo>> storeTypeMap = storehouseInfoList.stream().collect(Collectors.groupingBy(StorehouseInfo::getMaterialType));
         // 总订单数量
-        BigDecimal allOrderNumber = storehouseInfoList.stream().map(StorehouseInfo::getQuantity).reduce(BigDecimal.ZERO,BigDecimal::add);
+        BigDecimal allOrderNumber = storehouseInfoList.stream().map(StorehouseInfo::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
         // 总价格
         BigDecimal allPrice = storehouseInfoList.stream().map(p -> p.getQuantity().multiply(p.getUnitPrice())).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-
+        // 产品类型
+        List<ProductTypeInfo> productTypeInfoList = productTypeInfoService.list();
+        Map<Integer, String> productTypeMap = productTypeInfoList.stream().collect(Collectors.toMap(ProductTypeInfo::getId, ProductTypeInfo::getName));
         LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>() {
             {
                 put("allOrderNumber", allOrderNumber);
@@ -209,11 +216,21 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         storeTypeMap.forEach((key, value) -> {
             List<StorehouseInfo> item = storeTypeMap.get(key);
             if (CollectionUtil.isNotEmpty(item)) {
-                result.put(key + "orderNumber", item.stream().map(StorehouseInfo::getQuantity).reduce(BigDecimal.ZERO,BigDecimal::add));
-                result.put(key + "price", item.stream().map(p -> p.getQuantity().multiply(p.getUnitPrice())).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+                LinkedHashMap<String, Object> items = new LinkedHashMap<String, Object>() {
+                    {
+                        put("orderNumber", item.stream().map(StorehouseInfo::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add));
+                        put("price", item.stream().map(p -> p.getQuantity().multiply(p.getUnitPrice())).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+                    }
+                };
+                result.put(productTypeMap.get(key), items);
             } else {
-                result.put(key + "orderNumber", BigDecimal.ZERO);
-                result.put(key + "price", BigDecimal.ZERO);
+                LinkedHashMap<String, Object> items = new LinkedHashMap<String, Object>() {
+                    {
+                        put("orderNumber", BigDecimal.ZERO);
+                        put("price", BigDecimal.ZERO);
+                    }
+                };
+                result.put(productTypeMap.get(key), items);
             }
         });
         return result;

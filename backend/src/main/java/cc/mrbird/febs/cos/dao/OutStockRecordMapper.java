@@ -32,6 +32,15 @@ public interface OutStockRecordMapper extends BaseMapper<OutStockRecord> {
     List<LinkedHashMap<String, Object>> outStockDetail(@Param("code") String code);
 
     /**
+     * 根据年份月度查询出库信息
+     *
+     * @param year  年份
+     * @param month 月份
+     * @return 结果
+     */
+    List<OutStockRecord> selectOrderInfoByDate(@Param("year") String year, @Param("month") String month);
+
+    /**
      * 七天内出库统计
      *
      * @param materialType 物料类型
