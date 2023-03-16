@@ -2,45 +2,8 @@
   <a-card :bordered="false" class="card-area">
     <div :class="advanced ? 'search' : null">
       <!-- 搜索区域 -->
-      <a-form layout="horizontal">
-        <a-row :gutter="15">
-          <div :class="advanced ? null: 'fold'">
-            <a-col :md="6" :sm="24">
-              <a-form-item
-                label="入库单号"
-                :labelCol="{span: 4}"
-                :wrapperCol="{span: 18, offset: 2}">
-                <a-input v-model="queryParams.code"/>
-              </a-form-item>
-            </a-col>
-            <a-col :md="6" :sm="24">
-              <a-form-item
-                label="保管人"
-                :labelCol="{span: 4}"
-                :wrapperCol="{span: 18, offset: 2}">
-                <a-input v-model="queryParams.custodianName"/>
-              </a-form-item>
-            </a-col>
-            <a-col :md="6" :sm="24">
-              <a-form-item
-                label="供应商"
-                :labelCol="{span: 4}"
-                :wrapperCol="{span: 18, offset: 2}">
-                <a-input v-model="queryParams.supplierName"/>
-              </a-form-item>
-            </a-col>
-          </div>
-          <span style="float: right; margin-top: 3px;">
-            <a-button type="primary" @click="search">查询</a-button>
-            <a-button style="margin-left: 8px" @click="reset">重置</a-button>
-          </span>
-        </a-row>
-      </a-form>
     </div>
     <div>
-      <div class="operator">
-        <a-button @click="batchDelete">删除</a-button>
-      </div>
       <!-- 表格区域 -->
       <a-table ref="TableInfo"
                :columns="columns"
@@ -66,27 +29,18 @@
           <template>
             <a-tooltip>
               <template slot="title">
-                {{ record.remark }}
+                {{ record.content }}
               </template>
-              {{ record.remark.slice(0, 30) }} ...
+              {{ record.content.slice(0, 80) }} ...
             </a-tooltip>
           </template>
         </template>
         <template slot="operation" slot-scope="text, record">
-          <a-icon v-if="record.status == 1" type="audit" @click="audit(record)" title="审 核" style="margin-right: 15px"></a-icon>
-          <a-icon v-if="record.status == 2" type="folder-open" @click="view(record)" title="查 看" style="margin-right: 15px"></a-icon>
-          <a-icon type="download" @click="downLoad(record)" title="下 载"></a-icon>
+          <a-icon type="folder-open" @click="view(record)" title="查 看" style="margin-right: 15px"></a-icon>
         </template>
       </a-table>
-      <request-add
-        v-if="requestAdd.visiable"
-        @close="handleRequestAddClose"
-        @success="handleRequestAddSuccess"
-        :requestAddVisiable="requestAdd.visiable">
-      </request-add>
       <record-view
         @close="handlerecordViewClose"
-        @success="handlerecordSuccess"
         :recordShow="recordView.visiable"
         :recordData="recordView.data">
       </record-view>
@@ -96,16 +50,15 @@
 
 <script>
 import RangeDate from '@/components/datetime/RangeDate'
-import RecordView from './RecordView'
+import RecordView from './ReplenishmentView'
 import {mapState} from 'vuex'
 import { newSpread, floatForm, floatReset, saveExcel } from '@/utils/spreadJS'
 import moment from 'moment'
-import RequestAdd from './RequestAdd'
 moment.locale('zh-cn')
 
 export default {
   name: 'request',
-  components: {RequestAdd, RecordView, RangeDate},
+  components: {RecordView, RangeDate},
   data () {
     return {
       advanced: false,
@@ -143,70 +96,12 @@ export default {
     }),
     columns () {
       return [{
-        title: '入库单号',
-        dataIndex: 'code'
-      }, {
-        title: '总价',
-        dataIndex: 'totalPrice',
-        customRender: (text, row, index) => {
-          if (text !== null) {
-            return '￥' + text.toFixed(2)
-          } else {
-            return '- -'
-          }
-        }
-      }, {
-        title: '状态',
-        dataIndex: 'status',
-        customRender: (text, row, index) => {
-          switch (text) {
-            case 1:
-              return <a-tag color="red">等待审核</a-tag>
-            case 2:
-              return <a-tag color="green">已入库</a-tag>
-            case 3:
-              return <a-tag color="pink">已退货</a-tag>
-            default:
-              return '- -'
-          }
-        }
-      }, {
-        title: '供应商',
-        dataIndex: 'supplierName',
-        customRender: (text, row, index) => {
-          if (text !== null) {
-            return text
-          } else {
-            return '- -'
-          }
-        }
-      }, {
-        title: '保管人',
-        dataIndex: 'custodianName',
-        customRender: (text, row, index) => {
-          if (text !== null) {
-            return text
-          } else {
-            return '- -'
-          }
-        }
-      }, {
-        title: '经手人',
-        dataIndex: 'handlerName',
-        customRender: (text, row, index) => {
-          if (text !== null) {
-            return text
-          } else {
-            return '- -'
-          }
-        }
-      }, {
-        title: '备注',
-        dataIndex: 'remark',
+        title: '盘库统计',
+        dataIndex: 'content',
         scopedSlots: {customRender: 'contentShow'}
       }, {
-        title: '入库时间',
-        dataIndex: 'createDate',
+        title: '盘库时间',
+        dataIndex: 'taskDate',
         customRender: (text, row, index) => {
           if (text !== null) {
             return text
@@ -227,25 +122,17 @@ export default {
   methods: {
     downLoad (row) {
       this.$message.loading('正在生成', 0)
-      this.$get(`/cos/storage-record/export/${row.code}`).then((r) => {
-        let materialList = r.data.materialMapList
+      this.$get('/cos/goods-belong/getGoodsByNum', { num: row.num }).then((r) => {
         let newData = []
-        materialList.forEach((item, index) => {
-          newData.push([(index + 1).toFixed(0), item.materialName, item.measurementUnit !== null ? item.measurementUnit : '- -', item.quantity, item.unitPrice])
+        r.data.data.forEach((item, index) => {
+          newData.push([(index + 1).toFixed(0), item.name, item.unit !== null ? item.unit : '- -', item.amount, row.price])
         })
-        let spread = newSpread('inTable')
-        let sheet = spread.getActiveSheet()
-        sheet.suspendPaint()
-        sheet.setValue(2, 12, row.code)
-        spread = floatForm(spread, 'inTable', newData)
+        let spread = newSpread('inboundOrder')
+        spread = floatForm(spread, 'inboundOrder', newData)
         saveExcel(spread, '入库单.xlsx')
-        floatReset(spread, 'inTable', newData.length)
+        floatReset(spread, 'inboundOrder', newData.length)
         this.$message.destroy()
       })
-    },
-    audit (row) {
-      this.recordView.data = row
-      this.recordView.visiable = true
     },
     view (row) {
       this.recordView.data = row
@@ -253,11 +140,6 @@ export default {
     },
     handlerecordViewClose () {
       this.recordView.visiable = false
-    },
-    handlerecordSuccess () {
-      this.recordView.visiable = false
-      this.$message.success('入库成功')
-      this.search()
     },
     onSelectChange (selectedRowKeys) {
       this.selectedRowKeys = selectedRowKeys
@@ -291,7 +173,7 @@ export default {
         centered: true,
         onOk () {
           let ids = that.selectedRowKeys.join(',')
-          that.$delete('/cos/storage-record/' + ids).then(() => {
+          that.$delete('/cos/replenishment-info/' + ids).then(() => {
             that.$message.success('删除成功')
             that.selectedRowKeys = []
             that.search()
@@ -361,7 +243,7 @@ export default {
         params.size = this.pagination.defaultPageSize
         params.current = this.pagination.defaultCurrent
       }
-      this.$get('/cos/storage-record/page', {
+      this.$get('/cos/replenishment-info/page', {
         ...params
       }).then((r) => {
         let data = r.data.data

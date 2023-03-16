@@ -145,6 +145,21 @@ export default {
         title: '入库单号',
         dataIndex: 'code'
       }, {
+        title: '状态',
+        dataIndex: 'status',
+        customRender: (text, row, index) => {
+          switch (text) {
+            case 1:
+              return <a-tag color="red">等待审核</a-tag>
+            case 2:
+              return <a-tag color="green">已入库</a-tag>
+            case 3:
+              return <a-tag color="pink">已退货</a-tag>
+            default:
+              return '- -'
+          }
+        }
+      }, {
         title: '总价',
         dataIndex: 'totalPrice',
         customRender: (text, row, index) => {

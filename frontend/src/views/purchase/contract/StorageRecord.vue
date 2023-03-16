@@ -74,6 +74,7 @@
           </template>
         </template>
         <template slot="operation" slot-scope="text, record">
+          <a-icon v-if="record.status != 3" type="paper-clip" @click="goodClose(record)" title="查 看" style="margin-right: 15px"></a-icon>
           <a-icon type="folder-open" @click="view(record)" title="查 看" style="margin-right: 15px"></a-icon>
           <a-icon type="download" @click="downLoad(record)" title="下 载"></a-icon>
         </template>
@@ -89,6 +90,12 @@
         :recordShow="recordView.visiable"
         :recordData="recordView.data">
       </record-view>
+      <record-close
+        @close="handlerecordClose"
+        @success="handlerecordCloseSuccess"
+        :recordShow="recordClose.visiable"
+        :recordData="recordClose.data">
+      </record-close>
     </div>
   </a-card>
 </template>
@@ -96,6 +103,7 @@
 <script>
 import RangeDate from '@/components/datetime/RangeDate'
 import RecordView from './RecordView'
+import RecordClose from './RecordClose'
 import {mapState} from 'vuex'
 import { newSpread, floatForm, floatReset, saveExcel } from '@/utils/spreadJS'
 import moment from 'moment'
@@ -104,7 +112,7 @@ moment.locale('zh-cn')
 
 export default {
   name: 'request',
-  components: {RequestAdd, RecordView, RangeDate},
+  components: {RequestAdd, RecordView, RecordClose, RangeDate},
   data () {
     return {
       advanced: false,
@@ -115,6 +123,10 @@ export default {
         visiable: false
       },
       recordView: {
+        visiable: false,
+        data: null
+      },
+      recordClose: {
         visiable: false,
         data: null
       },
@@ -163,6 +175,8 @@ export default {
               return <a-tag color="red">等待审核</a-tag>
             case 2:
               return <a-tag color="green">已入库</a-tag>
+            case 3:
+              return <a-tag color="pink">已退货</a-tag>
             default:
               return '- -'
           }
@@ -222,6 +236,10 @@ export default {
     this.fetch()
   },
   methods: {
+    goodClose (row) {
+      this.recordClose.data = row
+      this.recordClose.visiable = true
+    },
     downLoad (row) {
       this.$message.loading('正在生成', 0)
       this.$get(`/cos/storage-record/export/${row.code}`).then((r) => {
@@ -243,6 +261,14 @@ export default {
     view (row) {
       this.recordView.data = row
       this.recordView.visiable = true
+    },
+    handlerecordCloseSuccess () {
+      this.recordClose.visiable = false
+      this.$message.success('退货成功')
+      this.search()
+    },
+    handlerecordClose () {
+      this.recordClose.visiable = false
     },
     handlerecordViewClose () {
       this.recordView.visiable = false

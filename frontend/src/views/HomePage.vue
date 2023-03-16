@@ -25,7 +25,7 @@
                 <head-info title="本月订单数" :content="statisticsByMonth !== null ? statisticsByMonth.orderTotal : 0" :center="false" :bordered="false"/>
               </a-col>
               <a-col :span="4">
-                <head-info title="本月支出" :content="statisticsByMonth !== null ? (statisticsByMonth.inTotalPrice + statisticsByMonth.salaryTotalPrice) : 0" :center="false" />
+                <head-info title="本月支出" :content="statisticsByMonth !== null ? (statisticsByMonth.inTotalPrice) : 0" :center="false" />
               </a-col>
               <a-col :span="4">
                 <head-info title="本月收入" :content="statisticsByMonth !== null ? statisticsByMonth.orderTotalPrice : 0" :center="false" />
@@ -82,7 +82,7 @@ export default {
         chart: {
           type: 'donut'
         },
-        labels: ['食品生鲜', '家用电器', '办公用品', '日常杂货'],
+        labels: [],
         responsive: [{
           breakpoint: 480,
           options: {
@@ -96,13 +96,10 @@ export default {
         }]
       },
       series2: [{
-        name: '入库',
+        name: '支出',
         data: []
       }, {
-        name: '出库',
-        data: []
-      }, {
-        name: '订单',
+        name: '收入',
         data: []
       }],
       chartOptions2: {
@@ -121,6 +118,7 @@ export default {
         }
       },
       series1: [{
+        name: '数量',
         data: []
       }],
       chartOptions1: {
@@ -211,12 +209,14 @@ export default {
       this.$get('/cos/order-info/statistics/rate', {year, month}).then((r) => {
         this.materialTypeRate = r.data
         let series = []
+        let label = []
         let series1 = []
         let chartOptions1 = []
-        for (let i = 0; i < 4; i++) {
-          let index = i + 1
-          series.push(this.materialTypeRate[index + 'price'] ? this.materialTypeRate[index + 'price'] : 0)
-        }
+        Object.keys(this.materialTypeRate.goods).forEach(e => {
+          console.log(e)
+          label.push(e)
+          series.push(this.materialTypeRate.goods[e].price ? this.materialTypeRate.goods[e].price : 0)
+        })
         if (this.materialTypeRate.materialSalesMapTop) {
           Object.keys(this.materialTypeRate.materialSalesMapTop).map(key => {
             series1.push(this.materialTypeRate.materialSalesMapTop[key])
@@ -225,6 +225,7 @@ export default {
         }
         setTimeout(() => {
           this.series3 = series
+          this.chartOptions3.labels = label
           this.series1[0].data = series1
           this.chartOptions1.xaxis.categories = chartOptions1
           this.loading1 = false
@@ -238,7 +239,6 @@ export default {
         let chartOptions = []
         let series1 = []
         let series2 = []
-        let series3 = []
         this.lastSevenDaysCount.in.forEach(item => {
           chartOptions.push(item.days)
           series1.push(item.totalPrice ? item.totalPrice : 0)
@@ -246,13 +246,9 @@ export default {
         this.lastSevenDaysCount.out.forEach(item => {
           series2.push(item.totalPrice ? item.totalPrice : 0)
         })
-        this.lastSevenDaysCount.order.forEach(item => {
-          series3.push(item.totalPrice ? item.totalPrice : 0)
-        })
         setTimeout(() => {
           this.series2[0].data = series1
           this.series2[1].data = series2
-          this.series2[2].data = series3
           this.chartOptions2.xaxis.categories = chartOptions
           this.loading2 = false
         }, 500)

@@ -213,6 +213,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 put("materialSalesMapTop", materialSalesMapTop);
             }
         };
+        LinkedHashMap<String, Object> goods = new LinkedHashMap<>();
         storeTypeMap.forEach((key, value) -> {
             List<StorehouseInfo> item = storeTypeMap.get(key);
             if (CollectionUtil.isNotEmpty(item)) {
@@ -222,7 +223,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                         put("price", item.stream().map(p -> p.getQuantity().multiply(p.getUnitPrice())).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
                     }
                 };
-                result.put(productTypeMap.get(key), items);
+                goods.put(productTypeMap.get(key), items);
             } else {
                 LinkedHashMap<String, Object> items = new LinkedHashMap<String, Object>() {
                     {
@@ -230,9 +231,10 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                         put("price", BigDecimal.ZERO);
                     }
                 };
-                result.put(productTypeMap.get(key), items);
+                goods.put(productTypeMap.get(key), items);
             }
         });
+        result.put("goods", goods);
         return result;
     }
 

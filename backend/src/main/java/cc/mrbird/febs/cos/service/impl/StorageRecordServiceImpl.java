@@ -100,7 +100,7 @@ public class StorageRecordServiceImpl extends ServiceImpl<StorageRecordMapper, S
             }
         });
         result.put("gooods", goodsList);
-        result.put("status", goodsList.stream().noneMatch(e -> e.getQuantity().compareTo(e.getStoreMax()) < 0));
+        result.put("status", goodsList.stream().noneMatch(e -> e.getStoreMax().compareTo(e.getQuantity()) < 0));
         return result;
     }
 

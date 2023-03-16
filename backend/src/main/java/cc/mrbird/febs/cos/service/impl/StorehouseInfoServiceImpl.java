@@ -94,7 +94,7 @@ public class StorehouseInfoServiceImpl extends ServiceImpl<StorehouseInfoMapper,
         replenishment.setTaskDate(DateUtil.formatDate(new Date()));
         replenishment.setContent(StrUtil.isEmpty(sb.toString()) ? "库存充足" : sb.toString());
         replenishment.setReplenishment(JSONUtil.toJsonStr(result));
-        replenishmentInfoService.save(replenishment);
+        replenishmentInfoService.saveReplenishment(replenishment);
     }
 
     /**
