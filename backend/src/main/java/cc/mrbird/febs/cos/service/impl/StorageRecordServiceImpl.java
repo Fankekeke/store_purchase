@@ -83,6 +83,8 @@ public class StorageRecordServiceImpl extends ServiceImpl<StorageRecordMapper, S
         if (StrUtil.isEmpty(code)) {
             return null;
         }
+        // 根据单号获取入库信息
+        StorageRecord storageRecord = this.getOne(Wrappers.<StorageRecord>lambdaQuery().eq(StorageRecord::getCode, code));
         List<StorehouseInfo> goodsList = storehouseInfoService.list(Wrappers.<StorehouseInfo>lambdaQuery().eq(StorehouseInfo::getInboundOrderNumber, code));
         // 获取物品库存信息
         List<String> materialNameList = goodsList.stream().map(StorehouseInfo::getMaterialName).distinct().collect(Collectors.toList());
@@ -99,8 +101,9 @@ public class StorageRecordServiceImpl extends ServiceImpl<StorageRecordMapper, S
                 e.setStoreMax(BigDecimal.ZERO);
             }
         });
+        long day = DateUtil.betweenDay(DateUtil.parseDate(storageRecord.getCreateDate()), new Date(), true);
         result.put("gooods", goodsList);
-        result.put("status", goodsList.stream().noneMatch(e -> e.getStoreMax().compareTo(e.getQuantity()) < 0));
+        result.put("status", goodsList.stream().noneMatch(e -> e.getStoreMax().compareTo(e.getQuantity()) < 0) && day <= 3);
         return result;
     }
 
