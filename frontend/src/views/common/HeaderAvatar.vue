@@ -12,11 +12,11 @@
           <span>密码修改</span>
         </a-menu-item>
         <a-menu-divider></a-menu-divider>
-        <a-menu-item @click="handleSettingClick">
-          <a-icon type="setting"/>
-          <span>系统定制</span>
-        </a-menu-item>
-        <a-menu-divider></a-menu-divider>
+<!--        <a-menu-item @click="handleSettingClick">-->
+<!--          <a-icon type="setting"/>-->
+<!--          <span>系统定制</span>-->
+<!--        </a-menu-item>-->
+<!--        <a-menu-divider></a-menu-divider>-->
         <a-menu-item @click="logout">
           <a-icon type="logout"/>
           <span>退出登录</span>

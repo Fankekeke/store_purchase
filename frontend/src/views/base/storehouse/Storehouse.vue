@@ -42,7 +42,7 @@
     <div>
       <div class="operator">
         <a-button @click="replenishment">盘库</a-button>
-        <a-button @click="add">出库</a-button>
+<!--        <a-button @click="add">出库</a-button>-->
       </div>
       <!-- 表格区域 -->
       <a-table ref="TableInfo"
