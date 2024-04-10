@@ -69,9 +69,8 @@ sys_store
 |![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868394681.png) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868578419.png) |
 |![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868375427.png) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868568011.png) |
 |![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868348161.png) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868554338.png) |
-|![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868331905.png) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868535310.png) |
+|![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868693704.png) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868535310.png) |
 |![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868245655.jpg) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868498352.png) |
-|![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868693704.png) | 
 
 #### 演示视频
 
