@@ -1,4 +1,4 @@
-### 基于SpringBoot + Vue的超市采购管理系统
+### 基于SpringBoot + Vue的超市采购管理系统.
 
 #### 安装环境
 
