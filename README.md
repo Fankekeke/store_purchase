@@ -1,17 +1,17 @@
-### 基于SpringBoot + Vue的超市采购管理系统.
+![](https://img.shields.io/badge/License-MIT-blue.svg)
 
-超市进货管理系统、零售采购平台、商品采购管理系统、供应链采购系统、超市库存与采购系统
+![](https://img.shields.io/badge/Version-1.0.0-brightgreen.svg)
 
-#### 管理员功能模块介绍：
-> 供应商准入：审核并管理供应商资质，控制合作准入权限。订单管理：创建、跟踪和审核采购订单全流程状态。入库记录：查看所有商品入库的时间、数量及操作人员信息。员工管理：维护采购、库管等岗位员工账号与权限分配。库房信息：管理各库房的基本资料、位置及存储容量配置。库房盘库：组织并记录定期库存盘点，确保账实相符。产品类别：维护商品分类体系，便于采购与库存归类管理。
+![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
-#### 采购员功能模块介绍：
-> 订单管理：发起采购申请，跟进订单执行与到货情况。退货管理：处理不合格或多余商品的退货流程及记录。采购合同管理：拟定、上传和管理与供应商签订的合同文件。库房信息：查看库房位置、容量及当前库存概况，辅助采购决策。
+# 基于 SpringBoot + Vue 的超市采购管理系统 (Supermarket Procurement Management System)
 
-#### 库房管理员功能模块介绍：
-> 库房信息：实时掌握所负责库房的基本参数与使用状态。出库记录：登记商品出库时间、去向、数量及领用人信息。入库记录：核对并录入采购到货商品的入库明细数据。盘库统计：执行盘点任务，生成差异报告与库存汇总报表。
+供应商准入 · 采购订单 · 入库出库 · 库房盘库 · 合同管理 · 退货管理 · 多角色协同
+
+本项目是一套面向超市零售场景的采购与库存管理系统，采用前后端分离架构，覆盖系统管理员、采购员、库房管理员三类角色。系统围绕“供应商准入、采购订单、入库管理、出库管理、库房盘库、退货管理、采购合同、产品类别”等核心业务设计，支持采购员在线创建采购订单、管理采购合同与退货流程，库房管理员完成货物入库、出库登记与盘库统计，系统管理员负责供应商资质审核、员工管理、库房信息维护与产品类别配置，适用于中小型超市、连锁便利店、仓储式卖场及零售企业的采购与库存管理场景。
 
 #### 安装环境
+️**注意**：请确保您的开发环境已安装以下依赖。
 
 JAVA 环境 
 
@@ -19,70 +19,161 @@ Node.js环境 [https://nodejs.org/en/] 选择14.17
 
 Yarn 打开cmd， 输入npm install -g yarn !!!必须安装完毕nodejs
 
-Mysql 数据库 [https://blog.csdn.net/qq_40303031/article/details/88935262] 一定要把账户和密码记住
+Mysql 数据库 一定要把账户和密码记住
 
 redis
 
-Idea 编译器 [https://blog.csdn.net/weixin_44505194/article/details/104452880]
+Idea 编译器
 
-WebStorm OR VScode 编译器 [https://www.jianshu.com/p/d63b5bae9dff]
+WebStorm OR VScode 编译器
 
 #### 采用技术及功能
 
 后端：SpringBoot、MybatisPlus、MySQL、Redis、
-前端：Vue、Apex、Antd、Axios、baidu.js
-报表：SpreadJS
+前端：Vue、Apex、Antd、Axios
+
+平台前端：vue(框架) + vuex(全局缓存) + rue-router(路由) + axios(请求插件) + apex(图表)  + antd-ui(ui组件) + 百度地图 API
 
 平台后台：springboot(框架) + redis(缓存中间件) + shiro(权限中间件) + mybatisplus(orm) + restful风格接口 + mysql(数据库)
 
 开发环境：windows10 or windows7 ， vscode or webstorm ， idea + lambok
 
-#### 前台启动方式
+---
 
+## 核心特性
+
+- **多角色权限管理**：区分系统管理员、采购员、库房管理员三类角色，实现不同权限隔离与功能访问控制。
+- **采购订单全流程管理**：支持采购员创建、编辑、提交采购订单，跟踪订单状态（待审核、已确认、已入库、已完成）。
+- **入库与出库管理**：库房管理员可对到货货物进行入库登记，对销售或调拨货物进行出库登记，实时同步库存数据。
+- **库房盘库统计**：支持定期盘库操作，系统自动比对账面库存与实际库存，生成盘盈盘亏统计报表。
+- **采购合同管理**：采购员可上传与管理采购合同，关联对应采购订单，便于合同追溯与履约管理。
+- **退货管理**：支持采购员创建退货单，处理不合格商品或滞销商品的退货流程，同步更新库存与供应商往来账。
+- **产品类别管理**：支持多级商品分类体系，便于商品归类、采购统计与库存查询。
+- **员工管理**：系统管理员可管理平台员工账号，分配角色权限，记录操作日志。
+- **库房信息管理**：维护多个库房/仓库信息，包括库房名称、位置、容量、负责人等，支持多库房库存独立核算。
+---
+
+## 适用场景
+
+- 中小型超市采购与库存管理
+- 连锁便利店商品采购与调拨
+- 仓储式卖场入库出库管理
+- 零售企业供应商资质管理
+- 采购合同与订单履约跟踪
+- 库房定期盘库与库存盘点
+- 退货流程管理与供应商往来
+---
+
+## 功能模块概览
+
+## 系统管理员端
+
+系统管理员负责平台整体配置、供应商准入、员工管理、库房维护与产品类别管理：
+
+### 供应商与产品管理
+
+- **供应商准入**：录入供应商基本信息（名称、联系人、电话、地址、资质文件），对供应商进行准入审核，维护合格供应商名录，支持禁用不合格供应商。
+- **产品类别管理**：维护商品分类体系，支持多级分类的增删改查，便于商品归类与采购统计。
+
+### 订单与入库管理
+
+- **订单管理**：查看平台所有采购订单，包括订单编号、采购员、供应商、商品明细、金额、状态与创建时间，支持按条件筛选与导出。
+- **入库记录**：查看所有入库记录，包括入库单号、关联订单、入库时间、库房、商品明细与入库数量。
+
+### 库房与员工管理
+
+- **库房信息管理**：维护库房基本信息，包括库房名称、位置、容量、负责人、联系电话，支持新增、编辑与禁用库房。
+- **库房盘库**：发起盘库任务，查看盘库统计结果，包括账面库存、实际库存、盘盈盘亏数量与差异明细。
+- **员工管理**：管理平台员工账号，包括姓名、工号、角色（采购员/库房管理员）、联系方式，支持账号启用/禁用与权限分配。
+
+---
+
+## 采购员端
+
+采购员负责采购业务执行，包括订单创建、合同管理、退货处理与库房信息查询：
+
+### 采购订单管理
+
+- **订单管理**：创建采购订单，选择供应商与商品，填写采购数量与单价，提交订单并跟踪订单状态（待确认、已确认、部分入库、已完成），支持编辑与取消待确认订单。
+
+### 退货与合同管理
+
+- **退货管理**：创建退货单，选择需退货的商品与对应订单，填写退货原因与数量，提交退货申请并跟踪退货状态，退货完成后同步扣减库存。
+- **采购合同管理**：上传采购合同文件，关联对应采购订单，查看合同有效期、条款与履约状态，支持合同下载与备注管理。
+
+### 库房信息查询
+
+- **库房信息**：查看各库房基本信息与当前库存概况，便于采购决策与调拨安排。
+
+---
+
+## 库房管理员端
+
+库房管理员负责库房日常操作，包括入库登记、出库登记、库房信息维护与盘库统计：
+
+### 入库管理
+
+- **入库记录**：对到货货物进行入库登记，关联采购订单，录入实收数量、入库时间、库房位置与经办人，系统自动更新库存数量。
+
+### 出库管理
+
+- **出库记录**：对销售出库或调拨出库进行登记，录入出库商品、数量、出库时间、去向与经办人，系统自动扣减库存数量。
+
+### 库房与盘库管理
+
+- **库房信息**：查看与维护所负责库房的基本信息，包括库房名称、位置、容量与当前库存概况。
+- **盘库统计**：执行盘库操作，录入各商品实际库存数量，系统自动比对账面库存，生成盘盈盘亏统计报表，支持导出盘库结果。
+
+---
+
+## 项目结构
+
+```text
+pharmacy-dispensing-system/
+├── backend/            # 后端 API 服务
+│   ├── src/
+│   │   ├── controllers/  # 控制器
+│   │   ├── models/       # 数据模型
+│   │   ├── routes/       # 路由
+│   │   └── services/     # 业务逻辑
+│   └── package.json
+├── frontend/           # 前端 Web 应用
+│   ├── src/
+│   │   ├── views/      # 页面视图
+│   │   ├── components/ # 公共组件
+│   │   └── store/      # 状态管理
+│   └── package.json
+├── docs/               # 项目文档与 API 接口说明
+├── LICENSE
+└── README.md
+```
+---
+
+
+#### 前台启动方式
 安装所需文件 yarn install 
 运行 yarn run dev
 
-#### 后端启动方式
-
-1.首先启动redis，进入redis目录终端。输入redis-server回车
-2.导入sql文件，修改数据库与redis连接配置
-3.idea中启动后端项目
-
-### 管理员
-供应商准入，订单管理，入库记录，员工管理，库房信息，库房盘库，产品类别
-
-### 采购员
-订单管理，退货管理，采购合同管理，库房信息
-
-### 库房管理员
-库房信息，出库记录，入库记录，盘库统计
-
 #### 默认后台账户密码
-
 [管理员]
-system
-1234qwer
+admin
+123456
 
-[采购员]
-caigou
-1234qwer
-
-[库房管理员]
-sys_store
-1234qwer
+[用户]
+fank
+123456
 
 #### 项目截图
-
 |  |  |
 |---------------------|---------------------|
-|![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868449983.png) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868654519.png) |
-|![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868423491.png) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868633350.png) |
-|![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868394681.png) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868578419.png) |
-|![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868375427.png) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868568011.png) |
-|![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868348161.png) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868554338.png) |
-|![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868693704.png) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868535310.png) |
-|![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868245655.jpg) | ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/1683868498352.png) |
-| ![](https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/work/936e9baf53eb9a217af4f89c616dc19.png) |
+| ![](./assets/image%20(1).png) | ![](./assets/image%20(2).png) |
+| ![](./assets/image%20(3).png) | ![](./assets/image%20(4).png) |
+| ![](./assets/image%20(5).png) | ![](./assets/image%20(6).png) |
+| ![](./assets/image%20(7).png) | ![](./assets/image%20(8).png) |
+| ![](./assets/image%20(9).png) | ![](./assets/image%20(10).png) |
+| ![](./assets/image%20(11).png) | ![](./assets/image%20(12).png) |
+| ![](./assets/image%20(13).png) | ![](./assets/image%20(14).png) |
+| ![](./assets/image%20(15).png) |
 
 #### 演示视频
 
@@ -100,7 +191,10 @@ WeChat: `Storm_Berserker`
 
 > 项目部署调试不好包退！功能逻辑没讲明白包退！
 
+<div align=center><img align="center" src="./assets/product_word.png" alt="fankekeke" /></div>
+
 #### 其它资源
+[2026年-答辩顺利通过-客户评价🀄](https://berserker287.github.io/2026/06/29/2026%E5%B9%B4%E7%AD%94%E8%BE%A9%E9%A1%BA%E5%88%A9%E9%80%9A%E8%BF%87/)
 
 [2025年-答辩顺利通过-客户评价🍜](https://berserker287.github.io/2025/06/18/2025%E5%B9%B4%E7%AD%94%E8%BE%A9%E9%A1%BA%E5%88%A9%E9%80%9A%E8%BF%87/)
 
@@ -118,11 +212,14 @@ WeChat: `Storm_Berserker`
 
 [计算机专业毕业答辩小tips](https://zhuanlan.zhihu.com/p/145911029)
 
-
 #### 接JAVAWEB毕设，纯原创，价格公道，诚信第一
 
 `网站建设、小程序、H5、APP、各种系统 选题+开题报告+任务书+程序定制+安装调试+项目讲解+论文+答辩PPT`
 
 More info: [悲伤的橘子树](https://berserker287.github.io/)
 
-<p><img align="center" src="https://fank-bucket-oss.oss-cn-beijing.aliyuncs.com/img/%E5%90%88%E4%BD%9C%E7%89%A9%E6%96%99%E6%A0%B7%E5%BC%8F%20(3).png" alt="fankekeke" /></p>
+<div align="center"><img align="center" src="./assets/chat_qr_code.png" alt="fankekeke" width=250 /></div>
+
+<p><img align="center" src="./assets/wechat_group.png" alt="fankekeke" /></p>
+
+**感谢查看**
